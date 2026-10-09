@@ -58,3 +58,14 @@
 - 后续复验发现 OneForAll exrex 0.10.5 使用 Python 3.11+ 已移除的 re.sre_parse，固定覆盖为 0.12.0；导入已通过。工具目录所有权交回 WSL 普通用户。
 - 快速 nmap 任务在 done 检查后、client poll 前完成，导致误判失败。现在 client 退出时重新检查 done，并加入确定性竞态测试；完整测试 **24 passed in 24.87s**，ruff 和 sdist/wheel 构建通过。
 - GitHub 官方固定 commit 递归 tree 显示 SecLists 共 6412 项、文件总量 1,964,874,086 bytes，超出原设计约 500MB 估计。改为固定版本 partial clone + 所需字典 sparse checkout，完整版本仍可显式安装。中断本次 full clone 时，Git 自身清理临时下载目录；预定保留操作未成功，未涉及用户源码或其它字典。
+
+### 批次 5 · 环境最终验收与追加交付
+
+- 修复与记录已提交 `fad93706bd240a60738839788e1f4bc1e506cd06` 并推送 main，本地/远端 SHA 一致；四环境 CI [37921283447](https://github.com/decline-llc/asm/actions/runs/37921283447) 已触发。
+- 重复安装时 root 读取普通用户持有的第三方 Git clone 触发 dubious ownership。安装器只为具体源码目录设置本次命令的 safe.directory，不写全局例外；Windows bootstrap 验证并显式传递 0/1 部署选项。
+- SecLists 元数据成功，但 Git lazy-fetch 第二连接超时。改用官方 raw 固定 commit 下载所需七个文件，逐一比对 Git tree blob SHA 并写入 object store；全部校验通过，完成 sparse checkout（本地约 2.7MB）。原版完整字典未自动下载。
+- OneForAll 生成有效 requirements，避免重复安装时先降级再升级 exrex；保留源码原文件。masscan 1.3.2 的 --version 退出码为 1，清单步骤只接受该已验证特殊码，避免安装成功被版本记录误判失败。
+- 本次 `init-wsl` **exit 0**，生成原生 WSL `manifests/installed.txt`；Chrome 155.0.8059.39、wafw00f 2.4.2、八固定二进制与两源码 commit 已记录。
+- 最终 `asm doctor --json-output` **exit 0，18/18 全部通过**，证据 `data/validation/doctor.json`；包含 OneForAll 普通用户导入、字典存在、根权限、Chromium 与磁盘/桥接延迟。
+- 已验证显式 GBK 管道下 CLI 输出可解析 UTF-8 JSON；`pip check` 与 `git diff --check` 通过。八报表视觉核验、24 项本地完整测试和构建证据保持有效。
+- CI 已配置只改文档时跳过重复运行；代码或配置变更仍验证 Windows/Linux × Python 3.11/3.12。完整设计缺口、DNS fake-IP 与待实网输入保持明示，未宣称 v2.0 DoD 全项完成。

@@ -74,26 +74,47 @@ if [ ! -x "$WS_DIR/tools/OneForAll/.venv/bin/python" ]; then
   python3 -m venv "$WS_DIR/tools/OneForAll/.venv"
 fi
 # Python 3.12 removed stdlib distutils; setuptools supplies its compatible shim.
-"$WS_DIR/tools/OneForAll/.venv/bin/pip" install 'setuptools==75.8.0' -r "$WS_DIR/tools/OneForAll/requirements.txt"
 # The upstream exrex pin imports re.sre_parse, unavailable on Python 3.11+.
-"$WS_DIR/tools/OneForAll/.venv/bin/pip" install 'exrex==0.12.0'
+sed 's/^exrex==0.10.5$/exrex==0.12.0/' "$WS_DIR/tools/OneForAll/requirements.txt" \
+  > "$WS_DIR/tmp/oneforall-requirements.txt"
+"$WS_DIR/tools/OneForAll/.venv/bin/pip" install 'setuptools==75.8.0' -r "$WS_DIR/tmp/oneforall-requirements.txt"
 if [ ! -d "$WS_DIR/wordlists/SecLists/.git" ]; then
-  git clone --depth 1 --filter=blob:none --sparse --branch 2026.1 \
+  git clone --depth 1 --filter=blob:none --no-checkout --branch 2026.1 \
     https://github.com/danielmiessler/SecLists.git "$WS_DIR/wordlists/SecLists"
 fi
 [ "$(repo_git "$WS_DIR/wordlists/SecLists" rev-parse HEAD)" = "$(jq -r '.source_repositories.SecLists.commit' "$LOCK")" ] || \
   { echo "SecLists commit differs from lock; preserve local changes and inspect" >&2; exit 2; }
 if [ "${ASM_SECLISTS_FULL:-0}" = 1 ]; then
   repo_git "$WS_DIR/wordlists/SecLists" sparse-checkout disable
-elif [ "$(repo_git "$WS_DIR/wordlists/SecLists" config --get core.sparseCheckout || true)" = true ]; then
+elif [ ! -f "$WS_DIR/wordlists/SecLists/Discovery/Web-Content/raft-medium-words.txt" ] || \
+     [ "$(repo_git "$WS_DIR/wordlists/SecLists" config --get core.sparseCheckout || true)" = true ]; then
+  # Seed exact blobs through raw.githubusercontent.com: some WSL proxy setups
+  # can clone Git metadata but cannot open Git's second lazy-fetch connection.
+  while IFS= read -r wordlist; do
+    blob=$(repo_git "$WS_DIR/wordlists/SecLists" ls-tree HEAD -- "$wordlist" | awk '{print $3}')
+    [[ "$blob" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid pinned dictionary: $wordlist" >&2; exit 2; }
+    cache="$WS_DIR/tmp/seclists-$blob"
+    if [ ! -f "$cache" ] || [ "$(repo_git "$WS_DIR/wordlists/SecLists" hash-object "$cache")" != "$blob" ]; then
+      commit=$(jq -r '.source_repositories.SecLists.commit' "$LOCK")
+      curl -fsSL --retry 3 --retry-all-errors --connect-timeout 15 --max-time 180 \
+        "https://raw.githubusercontent.com/danielmiessler/SecLists/$commit/$wordlist" -o "$cache"
+    fi
+    [ "$(repo_git "$WS_DIR/wordlists/SecLists" hash-object -w "$cache")" = "$blob" ] || \
+      { echo "Dictionary hash mismatch: $wordlist" >&2; exit 2; }
+    echo "[verified] SecLists $wordlist"
+  done < <(jq -r '.source_repositories.SecLists.sparse_paths[]' "$LOCK")
   jq -r '.source_repositories.SecLists.sparse_paths[] | "/" + .' "$LOCK" | \
     repo_git "$WS_DIR/wordlists/SecLists" sparse-checkout set --no-cone --stdin
+fi
+if [ ! -f "$WS_DIR/wordlists/SecLists/Discovery/Web-Content/raft-medium-words.txt" ]; then
+  repo_git "$WS_DIR/wordlists/SecLists" checkout --detach "$(jq -r '.source_repositories.SecLists.commit' "$LOCK")"
 fi
 export PATH="$WS_DIR/bin:$WS_DIR/tools/wafw00f/.venv/bin:$PATH"
 {
   date -u +'%Y-%m-%dT%H:%M:%SZ'
   nmap --version | head -2
-  masscan --version
+  # Masscan 1.3.2 prints its version with exit status 1.
+  masscan --version || [ "$?" -eq 1 ]
   google-chrome-stable --version
   wafw00f --version
   for tool in subfinder dnsx httpx naabu nuclei katana; do "$tool" -version; done

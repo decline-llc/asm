@@ -18,4 +18,6 @@
 
 SecLists 2026.1 文件总量约 1.96GB。默认使用固定 commit 的 partial clone 与 sparse checkout，安装版本锁指定的 raft-medium 四份 Web 字典、top-5000 DNS 字典、README 和许可证。需要其它字典时，在 WSL 原生目录扩展 sparse-checkout；安装时设置 `ASM_SECLISTS_FULL=1` 可取回完整版本。已完整检出的仓库会保留现有文件。
 
-OneForAll 上游 requirements 的 exrex 0.10.5 与 Python 3.11+ 不兼容；安装后固定覆盖为 0.12.0，并安装 setuptools 75.8.0 的 distutils shim。这些兼容依赖都位于 OneForAll 独立 venv。
+OneForAll 上游 requirements 的 exrex 0.10.5 与 Python 3.11+ 不兼容；bootstrap 生成有效 requirements，只将该版本替换为 0.12.0，并安装 setuptools 75.8.0 的 distutils shim。这些兼容依赖都位于 OneForAll 独立 venv，原源码及 requirements 保留。
+
+所需字典通过官方 raw 固定 commit 地址下载，并按该 Git tree 的 blob SHA 逐一校验后写入本地 Git object store，再完成 sparse checkout。这样可复用元数据并处理 WSL 下 Git lazy-fetch 第二连接超时，不跳过哈希校验。最终环境自检 18/18 已通过。

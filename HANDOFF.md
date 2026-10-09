@@ -10,4 +10,4 @@
 
 远端用户指定 `https://github.com/decline-llc/asm.git`，main；本地已初始化，推送进展看 WORKLOG。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
 
-优先接续：完成工具安装/doctor；按 COVERAGE 补齐 OneForAll、dnsx/dig、WSL Web 工具、真实 API/第三方浏览、共享配额和并行调度。自有域名实网验收缺少用户指定目标与 keys；默认/演示不能当作真实授权。
+环境已验收 18/18。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。优先接续：按 COVERAGE 补齐 OneForAll、dnsx/dig、WSL Web 工具、真实 API/第三方浏览、共享配额和并行调度。系统 DNS 有代理 fake-IP，实网归属验收需可信上游；自有域名实网验收缺少用户指定目标与 keys，默认/演示不能当作真实授权。
