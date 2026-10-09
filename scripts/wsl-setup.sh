@@ -7,6 +7,12 @@ GH_MIRROR="${GH_MIRROR:-}"
 case "$WS_DIR" in /mnt/*|*'..'*|*' '*) echo "Use a native, space-free WSL path" >&2; exit 2;; esac
 if [ "$(uname -m)" != x86_64 ]; then echo "This lock supports amd64 only" >&2; exit 2; fi
 mkdir -p "$WS_DIR"/{bin,tools,wordlists,results,tmp,manifests}
+repo_git() {
+  local repo="$1"
+  shift
+  # Root apt/bootstrap can inspect user-owned clones without a global Git exception.
+  git -c "safe.directory=$repo" -C "$repo" "$@"
+}
 APT_ARGS=(-o DPkg::Lock::Timeout=600)
 if [ "${ASM_APT_HTTPS:-1}" = 1 ]; then
   . /etc/os-release
@@ -62,17 +68,27 @@ fi
 if [ ! -d "$WS_DIR/tools/OneForAll/.git" ]; then
   git clone --depth 1 --branch v0.4.5 https://github.com/shmilylty/OneForAll.git "$WS_DIR/tools/OneForAll"
 fi
-[ "$(git -C "$WS_DIR/tools/OneForAll" rev-parse HEAD)" = "$(jq -r '.source_repositories.OneForAll.commit' "$LOCK")" ] || \
+[ "$(repo_git "$WS_DIR/tools/OneForAll" rev-parse HEAD)" = "$(jq -r '.source_repositories.OneForAll.commit' "$LOCK")" ] || \
   { echo "OneForAll commit differs from lock; preserve local changes and inspect" >&2; exit 2; }
 if [ ! -x "$WS_DIR/tools/OneForAll/.venv/bin/python" ]; then
   python3 -m venv "$WS_DIR/tools/OneForAll/.venv"
 fi
-"$WS_DIR/tools/OneForAll/.venv/bin/pip" install -r "$WS_DIR/tools/OneForAll/requirements.txt"
+# Python 3.12 removed stdlib distutils; setuptools supplies its compatible shim.
+"$WS_DIR/tools/OneForAll/.venv/bin/pip" install 'setuptools==75.8.0' -r "$WS_DIR/tools/OneForAll/requirements.txt"
+# The upstream exrex pin imports re.sre_parse, unavailable on Python 3.11+.
+"$WS_DIR/tools/OneForAll/.venv/bin/pip" install 'exrex==0.12.0'
 if [ ! -d "$WS_DIR/wordlists/SecLists/.git" ]; then
-  git clone --depth 1 --branch 2026.1 https://github.com/danielmiessler/SecLists.git "$WS_DIR/wordlists/SecLists"
+  git clone --depth 1 --filter=blob:none --sparse --branch 2026.1 \
+    https://github.com/danielmiessler/SecLists.git "$WS_DIR/wordlists/SecLists"
 fi
-[ "$(git -C "$WS_DIR/wordlists/SecLists" rev-parse HEAD)" = "$(jq -r '.source_repositories.SecLists.commit' "$LOCK")" ] || \
+[ "$(repo_git "$WS_DIR/wordlists/SecLists" rev-parse HEAD)" = "$(jq -r '.source_repositories.SecLists.commit' "$LOCK")" ] || \
   { echo "SecLists commit differs from lock; preserve local changes and inspect" >&2; exit 2; }
+if [ "${ASM_SECLISTS_FULL:-0}" = 1 ]; then
+  repo_git "$WS_DIR/wordlists/SecLists" sparse-checkout disable
+elif [ "$(repo_git "$WS_DIR/wordlists/SecLists" config --get core.sparseCheckout || true)" = true ]; then
+  jq -r '.source_repositories.SecLists.sparse_paths[] | "/" + .' "$LOCK" | \
+    repo_git "$WS_DIR/wordlists/SecLists" sparse-checkout set --no-cone --stdin
+fi
 export PATH="$WS_DIR/bin:$WS_DIR/tools/wafw00f/.venv/bin:$PATH"
 {
   date -u +'%Y-%m-%dT%H:%M:%SZ'
@@ -83,7 +99,7 @@ export PATH="$WS_DIR/bin:$WS_DIR/tools/wafw00f/.venv/bin:$PATH"
   for tool in subfinder dnsx httpx naabu nuclei katana; do "$tool" -version; done
   ffuf -V
   gowitness version
-  git -C "$WS_DIR/tools/OneForAll" rev-parse HEAD
-  git -C "$WS_DIR/wordlists/SecLists" rev-parse HEAD
+  repo_git "$WS_DIR/tools/OneForAll" rev-parse HEAD
+  repo_git "$WS_DIR/wordlists/SecLists" rev-parse HEAD
 } 2>&1 | tee "$WS_DIR/manifests/installed.txt"
 echo "WSL tools installed: $WS_DIR"

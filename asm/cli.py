@@ -1,6 +1,7 @@
 import json
 import os
 import runpy
+import sys
 from pathlib import Path
 
 import click
@@ -18,6 +19,10 @@ os.environ.setdefault("PYTHONUTF8", "1")
 @click.version_option(package_name="asm-workbench")
 def main():
     """Windows orchestration with native WSL tools and a persisted audit trail."""
+    # PYTHONUTF8 set after interpreter startup does not change existing streams.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     load_dotenv(Path.cwd() / ".env", override=False)
 
 

@@ -46,3 +46,15 @@
 - Playwright 截图和 xlsx 相对链接有效；Artifact Tool 只读渲染全部 8 张 sheet，已检查总表/URLs/todos，继续核验其余。截图与渲染结果不提交仓库。
 - WSL 直连 HTTP Ubuntu 源受到本机代理 fake-IP 影响，HTTPS 官方源可达；安装脚本改用项目临时 HTTPS source list，不改 /etc 系统源。已继续安装 Chrome、wafw00f、OneForAll/SecLists。
 - `git check-ignore` 确认 .env、data/test/asm.db、.venv 被忽略。准备首次 main 提交和推送，提交/远端证据随后追加。
+
+### 批次 4 · 首次推送与部署复验
+
+- 统一文本 LF，清除 SSE fixture 末尾空行；`git diff --cached --check` 通过。首个提交 `49044d19945012a97103ca48ce0a504feca4cd7d`，86 个文件。
+- 首次 Git push 因多账号未选定、禁止交互时无法获取 Username 而失败；GitHub 连接器写 blob 仍返回 403 `Resource not accessible by integration`。本机 GCM 已有 decline-llc 凭据，配置仓库级 `credential.https://github.com.username=decline-llc` 后成功 `git push -u origin main`。未读取、输出或写入明文令牌。
+- `git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main` 均为上述 SHA，已验证远端提交。GitHub Actions 首轮 [37918864553](https://github.com/decline-llc/asm/actions/runs/37918864553) 四环境（Windows/Linux × Python 3.11/3.12）全部通过。
+- 八张报表已全部只读渲染并逐页检查，视觉核验通过。运行数据、浏览器截图与渲染结果保持本地。
+- `doctor` 首轮 15/18：发现直接 WSL 命令 PATH 引号、UTF-16LE Windows 警告与 Linux UTF-8 混合解码、Windows 管道编码，以及 Python 3.12 OneForAll 缺少 distutils shim。已修复对应代码并给 OneForAll 增加固定 setuptools 75.8.0 依赖；回归验证继续中。
+- Chrome、wafw00f 与 OneForAll requirements 安装完成；SecLists 2026.1 原生 WSL clone 持续下载。17/18 等临时状态不可当作环境就绪，最终以 18/18 实测结果为准。
+- 后续复验发现 OneForAll exrex 0.10.5 使用 Python 3.11+ 已移除的 re.sre_parse，固定覆盖为 0.12.0；导入已通过。工具目录所有权交回 WSL 普通用户。
+- 快速 nmap 任务在 done 检查后、client poll 前完成，导致误判失败。现在 client 退出时重新检查 done，并加入确定性竞态测试；完整测试 **24 passed in 24.87s**，ruff 和 sdist/wheel 构建通过。
+- GitHub 官方固定 commit 递归 tree 显示 SecLists 共 6412 项、文件总量 1,964,874,086 bytes，超出原设计约 500MB 估计。改为固定版本 partial clone + 所需字典 sparse checkout，完整版本仍可显式安装。中断本次 full clone 时，Git 自身清理临时下载目录；预定保留操作未成功，未涉及用户源码或其它字典。

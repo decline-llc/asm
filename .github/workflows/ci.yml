@@ -1,7 +1,9 @@
 name: Validate ASM
 on:
   push:
+    paths-ignore: ['docs/**', '**/*.md', '**/*.html']
   pull_request:
+    paths-ignore: ['docs/**', '**/*.md', '**/*.html']
 permissions:
   contents: read
 jobs:

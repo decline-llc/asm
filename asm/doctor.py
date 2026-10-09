@@ -66,7 +66,7 @@ def binary_versions(bridge):
     for tool in ("subfinder", "dnsx", "httpx", "naabu", "nuclei", "katana", "ffuf", "gowitness"):
         args = ["-V"] if tool == "ffuf" else ["version"] if tool == "gowitness" else ["-version"]
         reply = bridge.control(bridge.command(tool, args, timeout=10), timeout=20)
-        results.append(decode(reply.stdout + reply.stderr).strip())
+        results.append((decode(reply.stdout) + decode(reply.stderr)).strip())
     return " | ".join(results)
 
 

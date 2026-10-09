@@ -21,7 +21,12 @@ def deploy(distro, user="", install=True):
         subprocess.run(prefix + ["--", "bash", "-lc", "cat > " + shlex.quote(workspace + "/" + dest)],
                        input=data, check=True)
     if install:
-        script = f"export ASM_WS={shlex.quote(workspace)}; bash {shlex.quote(workspace + '/wsl-setup.sh')}"
+        flags = {name: os.getenv(name, default) for name, default in
+                 (("ASM_SKIP_APT", "0"), ("ASM_APT_HTTPS", "1"), ("ASM_SECLISTS_FULL", "0"))}
+        if any(value not in ("0", "1") for value in flags.values()):
+            raise ValueError("Deployment flags must be 0 or 1")
+        exports = " ".join(f"{name}={value}" for name, value in flags.items())
+        script = f"export {exports} ASM_WS={shlex.quote(workspace)}; bash {shlex.quote(workspace + '/wsl-setup.sh')}"
         try:
             subprocess.run(["wsl.exe", "-d", distro, "-u", "root", "--", "bash", "-lc", script], check=True)
         finally:

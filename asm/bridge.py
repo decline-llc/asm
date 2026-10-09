@@ -21,7 +21,15 @@ class BridgeError(RuntimeError):
 
 def decode(data):
     if b"\x00" in data:
-        return data.decode("utf-16-le", errors="replace").lstrip("\ufeff")
+        # wsl.exe may prefix Linux UTF-8 stderr with a UTF-16LE Windows warning.
+        boundary = data.rfind(b"\x00") + 1
+        if boundary % 2:
+            boundary += 1
+        try:
+            tail = data[boundary:].decode("utf-8")
+        except UnicodeDecodeError:
+            return data.decode("utf-16-le", errors="replace").lstrip("\ufeff")
+        return data[:boundary].decode("utf-16-le", errors="replace").lstrip("\ufeff") + tail
     return data.decode("utf-8", errors="replace")
 
 
@@ -81,7 +89,7 @@ class Bridge:
             if str(arg).startswith(("/mnt/", "\\\\wsl", "C:\\", "D:\\")):
                 raise BridgeError("Cross-boundary tool file paths are forbidden")
         path = shlex.quote(self.workspace + "/bin") + ":" + shlex.quote(self.workspace + "/tools/wafw00f/.venv/bin")
-        return f"export PATH={path}:$PATH; timeout --signal=TERM --kill-after=5s {int(timeout)}s " + shlex.join(
+        return f'export PATH={path}:"$PATH"; timeout --signal=TERM --kill-after=5s {int(timeout)}s ' + shlex.join(
             [tool] + [str(a) for a in args])
 
 
@@ -218,14 +226,16 @@ class JobManager:
             return True
         if not self.fs.exists(handle.directory + "/done"):
             process = self.processes.get(handle.jobid)
-            if process is not None and process.poll() is not None:
+            if process is None or process.poll() is None:
+                return False
+            # Recheck after the client exits: it may have written done during poll().
+            if not self.fs.exists(handle.directory + "/done"):
                 handle.rc = process.returncode or -1
                 handle.status = "failed"
                 self.db.upsert("jobs", {"jobid": handle.jobid, "status": "failed", "rc": handle.rc,
                                        "finished": utcnow()}, ("jobid",))
                 self.log(handle, event="client_exited_without_done")
                 return True
-            return False
         handle.rc = int(self.fs.read_text(handle.directory + "/rc").strip())
         result_dir = self.output / "results" / handle.stage / handle.jobid
         self.fs.pull_dir(handle.directory, result_dir)

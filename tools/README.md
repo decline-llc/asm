@@ -15,3 +15,7 @@
 八个二进制的版本、官方 URL 与 SHA-256 见 `tool-lock.json`。安装前校验下载摘要，重复安装复用已经校验的缓存。APT 包与 Chrome 版本在 WSL `manifests/installed.txt` 中记录；Python 工具各有独立 venv，兼容 Ubuntu 的 externally-managed Python。
 
 当前会话使用已有 `Ubuntu` 24.04 发行版。本机 `.env` 指定 `WSL_DISTRO=Ubuntu`；模板仍为设计的 `Ubuntu-22.04`。安装入口：`python -m asm init-wsl --distro Ubuntu`。
+
+SecLists 2026.1 文件总量约 1.96GB。默认使用固定 commit 的 partial clone 与 sparse checkout，安装版本锁指定的 raft-medium 四份 Web 字典、top-5000 DNS 字典、README 和许可证。需要其它字典时，在 WSL 原生目录扩展 sparse-checkout；安装时设置 `ASM_SECLISTS_FULL=1` 可取回完整版本。已完整检出的仓库会保留现有文件。
+
+OneForAll 上游 requirements 的 exrex 0.10.5 与 Python 3.11+ 不兼容；安装后固定覆盖为 0.12.0，并安装 setuptools 75.8.0 的 distutils shim。这些兼容依赖都位于 OneForAll 独立 venv。

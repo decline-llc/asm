@@ -21,6 +21,8 @@ def bridge():
 
 
 def test_background_completion_failure_and_tar(bridge, db, tmp_path):
+    # A direct control call also works when inherited Windows PATH has spaces/parentheses.
+    assert bridge.control(bridge.command("python3", ["-c", "print('direct-ok')"])).stdout.strip() == b"direct-ok"
     jobs = JobManager(bridge, db, tmp_path, foreground_seconds=0.1, poll_seconds=0.05)
     first = jobs.run("python3", ["-c", "import time; time.sleep(.5); open('result.bin','wb').write(bytes(range(256)))"],
                      stage="test", timeout=10)

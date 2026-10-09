@@ -14,5 +14,8 @@
 - [FOFA API 与证书字段](https://fofa.info/api)
 - [OneForAll v0.4.5](https://github.com/shmilylty/OneForAll/tree/v0.4.5)
 - [SecLists 2026.1](https://github.com/danielmiessler/SecLists/tree/2026.1)
+- [SecLists 固定 commit 递归 tree 与文件尺寸](https://api.github.com/repos/danielmiessler/SecLists/git/trees/190c6f7bd58c847ceadfe57d9853592737f059e8?recursive=1)
+- [exrex 0.12.0 官方发布](https://pypi.org/project/exrex/0.12.0/)
+- [Python 3.12 变更](https://docs.python.org/3.12/whatsnew/3.12.html)
 
 面板已做脱敏格式回放，真实 API 能否继续使用必须以账户现场验证为准。服务政策和接口可能变化，不根据旧返回样例宣称 live 验收完成。

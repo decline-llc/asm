@@ -3,7 +3,17 @@
   "resolved_at": "2026-10-09",
   "source_repositories": {
     "OneForAll": {"tag":"v0.4.5","commit":"5ad26a99cd8625dfff0f3ce0300a10b38135b03a"},
-    "SecLists": {"tag":"2026.1","commit":"190c6f7bd58c847ceadfe57d9853592737f059e8"}
+    "SecLists": {
+      "tag":"2026.1","commit":"190c6f7bd58c847ceadfe57d9853592737f059e8",
+      "sparse_paths": [
+        "README.md", "LICENSE",
+        "Discovery/DNS/subdomains-top1million-5000.txt",
+        "Discovery/Web-Content/raft-medium-directories.txt",
+        "Discovery/Web-Content/raft-medium-extensions.txt",
+        "Discovery/Web-Content/raft-medium-files.txt",
+        "Discovery/Web-Content/raft-medium-words.txt"
+      ]
+    }
   },
   "binaries": [
     {"name":"subfinder","version":"2.17.0","url":"https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0/subfinder_2.17.0_linux_amd64.zip","sha256":"a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37"},

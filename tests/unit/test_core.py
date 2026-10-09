@@ -1,9 +1,10 @@
 import io
 import tarfile
+from unittest.mock import Mock
 
 import pytest
 
-from asm.bridge import Bridge, BridgeError, WsFs, native_path
+from asm.bridge import Bridge, BridgeError, JobHandle, JobManager, WsFs, decode, native_path
 from asm.models import Asset, Domain
 from asm.precision import Evidence, classify, destination
 from asm.scope import Scope, ScopeError, normalize_host, registrable
@@ -69,6 +70,29 @@ def test_native_paths_and_commands():
     for value in ["/mnt/c/a", "C:\\project", "/home/fixture/../etc", "\\\\wsl$\\a"]:
         with pytest.raises(BridgeError):
             native_path(value)
+
+
+def test_wsl_mixed_stderr_encoding():
+    warning = "wsl: 检测到 localhost 代理配置\r\n"
+    error = "bash: syntax error near unexpected token '('\n"
+    assert decode(warning.encode("utf-16-le") + error.encode("utf-8")) == warning + error
+    assert decode("Ubuntu Running 2\r\n".encode("utf-16-le")) == "Ubuntu Running 2\r\n"
+    assert decode("路径 UTF-8".encode("utf-8")) == "路径 UTF-8"
+
+
+def test_completion_marker_appears_when_client_exits(db, tmp_path, monkeypatch):
+    manager = JobManager(Bridge(), db, tmp_path)
+    handle = JobHandle("quick", "/home/fixture/asm-ws/results/quick", "fixture", "test")
+    db.upsert("jobs", {"jobid": "quick", "cmd": "fixture", "started": "fixture", "status": "running"}, ("jobid",))
+    process = Mock(returncode=0)
+    process.poll.return_value = 0
+    manager.processes[handle.jobid] = process
+    monkeypatch.setattr(manager.fs, "exists", Mock(side_effect=[False, True]))
+    monkeypatch.setattr(manager.fs, "read_text", lambda path: "0")
+    monkeypatch.setattr(manager.fs, "pull_dir", lambda path, dest: dest.mkdir(parents=True))
+    assert manager.poll(handle)
+    assert handle.status == "completed" and handle.rc == 0
+    assert db.rows("SELECT status FROM jobs WHERE jobid='quick'")[0]["status"] == "completed"
 
 
 def archive(name, *, link=False):

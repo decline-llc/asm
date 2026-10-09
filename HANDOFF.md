@@ -4,7 +4,7 @@
 
 环境事实已更新：正式提权通道可执行 PowerShell Core 7.6.5；WSL2 Ubuntu 24.04.4 可用；项目 `.venv` 为 Windows Python 3.11.9。原 Session 001 的拒绝访问属于历史记录。命令必须显式使用 `pwsh.exe`，不要用 Windows PowerShell 5.1。
 
-已验证：完整测试 22 passed，无 skip；包括离线核心、本地 HTTP/截图/八表报告/15s 配额、真实 WSL 后台回收与 root nmap。最新工具部署与远端状态以 ACCEPTANCE 为准。
+已验证：最新完整测试 24 passed，无 skip；包括离线核心、本地 HTTP/截图/八表报告/15s 配额、真实 WSL 后台回收与 root nmap。首个 main 提交已推送，四环境 CI 通过。最新工具部署与远端状态以 ACCEPTANCE 为准。
 
 工具在 `/home/longchuanli/asm-ws`，固定版本在 `tools/tool-lock.json`；项目只通过 stdin/tar 管道交换数据。当前 WSL 环境需为异步工具保留 Windows Popen 客户端，否则孤儿 Linux 任务可能被回收。
 
