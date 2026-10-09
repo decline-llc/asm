@@ -1,0 +1,5 @@
+event: matches
+data: [{"type":"content","repository":"github.com/fixture/example","path":"config/example.env","lineMatches":[{"line":"FIXTURE_PLACEHOLDER=redacted","lineNumber":1}]}]
+
+event: progress
+data: {"done":true,"matchCount":1}

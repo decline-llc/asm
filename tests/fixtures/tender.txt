@@ -1,0 +1,10 @@
+项目名称：示例资产管理平台
+供应商：示例供应商
+版本：1.0-fixture
+部署地址：https://portal.example.invalid
+联系人：[PERSON]
+邮箱：person@example.invalid
+电话：[PHONE]
+IP：192.0.2.10
+备案号：示ICP备00000000号-1
+招标编号：FIXTURE-0001

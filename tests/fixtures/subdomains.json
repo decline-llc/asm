@@ -1,0 +1,5 @@
+[
+  {"domain":"www.example.invalid","source":"crt.sh"},
+  {"domain":"api.example.invalid","source":"subfinder"},
+  {"domain":"uat.example.invalid","source":"hackertarget"}
+]

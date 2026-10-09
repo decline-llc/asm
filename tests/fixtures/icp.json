@@ -1,0 +1,8 @@
+[
+  {"domain":"example.invalid","status":200,"text":"示ICP备00000000号-1 示ICP备00000000号-2","related_domains":["portal.example.invalid"]},
+  {"domain":"empty.example.invalid","status":200,"text":"No ICP evidence"},
+  {"domain":"redirect.example.invalid","status":302,"text":""},
+  {"domain":"waf.example.invalid","status":403,"text":"Denied"},
+  {"domain":"busy.example.invalid","status":503,"text":"Unavailable"},
+  {"domain":"expired.example.invalid","status":null,"text":""}
+]

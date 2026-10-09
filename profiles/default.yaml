@@ -1,0 +1,38 @@
+profile: default
+authorization: false
+targets:
+  company: ""
+  brands: []
+  roots: []
+  ip_cidrs: []
+  extra_persons: []
+scope:
+  include: []
+  exclude_saas: ["*.weixin.qq.com", "*.alicdn.com", "*.qq.com", "*.weixin.qq.com.cn"]
+rates:
+  fofa_min_interval: 15
+  fofa_daily: 200
+  hunter_daily: 500
+  masscan_rate: 1000
+  ffuf_tps: 50
+  dns_threads: 60
+limits:
+  subfinder_timeout: 900
+  oneforall_timeout: 3600
+  masscan_timeout: 14400
+  http_timeout: 15
+quake:
+  split_over: 100
+engine_priority:
+  large_corp: [subfinder, hackertarget, quake, fofa, hunter]
+  small_corp: [subfinder, hackertarget, censys, quake]
+  corp_size: auto
+supply_chain:
+  cert_domain_limit: 8
+  hv_ip_limit: 6
+  vendor_list: []
+web:
+  urls: []
+  max_response_bytes: 65536
+output:
+  dir: data

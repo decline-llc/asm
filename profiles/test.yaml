@@ -1,0 +1,29 @@
+profile: test
+# Local fixture only. This does not authorize any external target.
+authorization: true
+targets:
+  company: "Fixture Example Organization"
+  brands: ["FixtureBrand"]
+  roots: [localhost]
+  ip_cidrs: [127.0.0.1/32, "::1/128"]
+  extra_persons: []
+scope:
+  include: []
+  exclude_saas: ["*.qq.com", "*.alicdn.com"]
+rates:
+  fofa_min_interval: 15
+  fofa_daily: 200
+  hunter_daily: 500
+  ffuf_tps: 10
+limits:
+  subfinder_timeout: 60
+  http_timeout: 5
+web:
+  urls: ["http://127.0.0.1:8765"]
+  max_response_bytes: 65536
+ports:
+  targets: [127.0.0.1]
+  tcp: "8765,8766,8768"
+  udp: "8767"
+output:
+  dir: data

@@ -1,0 +1,6 @@
+[
+  {"cid":"fixture-parent","name":"示例母公司","parent_cid":null,"website":"https://example.invalid","email_suffix":"example.invalid"},
+  {"cid":"fixture-child","name":"示例控股子公司","parent_cid":"fixture-parent","share_pct":51,"website":null,"email_suffix":"example.invalid"},
+  {"cid":"fixture-grandchild","name":"示例孙公司","parent_cid":"fixture-child","share_pct":80,"website":null,"email_suffix":"example.invalid"},
+  {"cid":"fixture-minority","name":"示例非控股公司","parent_cid":"fixture-parent","share_pct":50,"website":null}
+]

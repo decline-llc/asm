@@ -1,0 +1,203 @@
+<div style="background:#FFFFFF;width:100%;padding:16px;box-sizing:border-box;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#1A2029;font-size:14px;line-height:1.5">
+  <div style="font-weight:600;font-size:15px;margin-bottom:4px">互联网暴露面收集框架 · 全流程设计图稿 v2.0</div>
+  <div style="font-size:11px;color:#838A95;margin-bottom:8px">四层架构：8 阶段主干 + 2 条并行横向线（OSINT / 供应链）+ 六引擎测绘面板 + 数据治理底座 · 依据 DesRedTeam 12 类 122 方法全集归位整合</div>
+  <div style="background:#FFF9F0;border:1px solid #F5C98A;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:10px"><span style="font-weight:600;color:#B45309">v2.0 变更：</span>新增并行线 P1 OSINT、并行线 P2 供应链、阶段 5 子域名接管检测、阶段 7 Web/API 深挖四大模块 · 修正 FOFA 证书语法为 cert.subject.cn=（点号）· 修正 CDN 处理（80/443 跳过、3000-9200 高端口仍扫）· 输出升级为总表 + 7 sheet + 精度分级</div>
+  <div style="font-size:11px;color:#838A95;margin-bottom:12px">图例：深框＝阶段主引擎 · 蓝底＝FOFA · 灰框＝证书 · 虚线＝人工门 · 橙框＝v2.0 新增 · 绿框＝并行横向线</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">1</span><span style="font-weight:500">输入标准化</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">域名</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">IP / CIDR（直连支路，直达阶段 6）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">公司全名</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">品牌名 / 高管法人名（高价值查询键）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">混合列表</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">品牌名比公司全名多出约 10 倍结果 · whois · dig -x → seed.json（带总部 / 子公司层级标签）</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">2A</span><span style="font-weight:500">股权穿透 · 画组织树</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">小蓝本 6-Phase 主引擎 / ENScan Go</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">递归 ≥51% 控股子孙公司</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">爱企查品牌名搜索</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">高管法人关联反查</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">邮箱后缀归属确认</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">企查查 / 启信宝</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #838A95;border-radius:999px;padding:2px 9px">证书A crt.sh ?O= / Censys</span>
+      <span style="font-size:12px;background:#E9F6FF;border:1px solid #C8E8FE;border-radius:999px;padding:2px 9px">FOFA① cert.subject.cn=（点号）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">Quake cert:"公司全名"（数据最全）</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">小蓝本 err002 预热修复：先导航详情页触发签名 SDK 再搜索，绕过验签 403 · SPV 壳公司 website=null 勿编造 · 股权树落库 company/&lt;cid&gt; + contains 边</div>
+  </div>
+
+  <div style="height:8px"></div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">2B</span><span style="font-weight:500">ICP 备案体系（中国特有扩面）</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">icp-scan 三级兜底主引擎</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">备案号递归反查 -1…-N 子号</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">同主办单位域名反查</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">备案 IP 反查 C 段归属</span>
+      <span style="font-size:12px;background:#E9F6FF;border:1px solid #C8E8FE;border-radius:999px;padding:2px 9px">FOFA icp.name=</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">Hunter ICP 主体</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">三级兜底：L1 爬首页 footer（60%）→ L2 搜索引擎快照（30%）→ L3 工信部官网（10%）· 状态码分流：200 无备案→L2 · 3xx 追跳转 · 403/503 WAF→L2 · 无响应→域名过期 · ⇉ 阶段 2 起同时启动并行线 P1 / P2（见下方）</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#FFFFFF;border:1px dashed #B0B7C0;border-radius:10px;padding:8px 12px;font-size:12px;text-align:center">人工门 · 确认根域名（同名公司消歧、已出售域名剔除）· 入集需三重归属确认：IP 段归属 + 备案信息 + 页面内容</div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">3</span><span style="font-weight:500">范围圈定</span></div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">人工编写 scope.yaml：include 根域名 · 排除第三方 SaaS / CDN 厂商节点 / 合作伙伴资产 · scope 校验器拦截后续一切越界主动请求</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">4</span><span style="font-weight:500">子域名收集（16 种手段）</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">OneForAll 主引擎（异步全量）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">subfinder（先查历史结果防重跑）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">HackerTarget hostsearch（免费无 key）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">拼音域名模式猜测</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">搜索引擎 site: 语法</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">gau / wayback CDX 历史URL</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">DNS 暴力枚举 60+ 前缀字典</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">VirusTotal · DNSDumpster</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">Amass passive · JSFinder</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">dnsgen 置换二次解析</span>
+      <span style="font-size:12px;background:#E9F6FF;border:1px solid #C8E8FE;border-radius:999px;padding:2px 9px">FOFA② domain + title 过滤</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">Quake domain（A级可信）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #838A95;border-radius:999px;padding:2px 9px">证书B · CT 日志（内置）</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">通配符检测：dig random123456 也解析 → 枚举无意义，真实 IP 另寻 · 拼音规律：lyx+fd.com / ljx+sdz.com，后缀字典 fd/sdz/power/solar/silicon/pv/energy · FOFA title!="-" &amp;&amp; title!="404" 筛掉无用记录翻页拉全 · site:domain -www / intitle:登录/后台 / inurl:.git</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">5</span><span style="font-weight:500">DNS 解析 · CDN 穿透 · 接管检测</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">dnsx 主引擎 · A / CNAME 链</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">多解析商差异对比（1.1.1.1 vs 114 vs 8.8.8.8）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">MX 记录找真实 IP</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">历史解析 IP（ip138 查未上 CDN 时期）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">无 CDN 子域横向 · 境外无节点回源</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">CDN 指纹（Server:PWS / Via:PS-xxx / *.gccdn.net）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">cdncheck · massdns</span>
+    </div>
+    <div style="background:#FFFBF5;border:1px solid #F5A623;border-radius:8px;padding:8px;margin-top:8px">
+      <div style="font-size:13px;font-weight:500">v2.0 新增子块 · 子域名接管检测（悬空资产）</div>
+      <div style="font-size:12px;color:#7C4A03;margin-top:2px">CNAME dangling（14+ provider 指纹表：S3 NoSuchBucket / GitHub Pages 404 / Heroku No such app）· NS 接管（过期域名→控制全 zone）· MX 接管（拦截密码重置邮件）· CNAME 链跟到底，CNAME≠可接管（403 私有桶不算，404 NoSuchBucket 才算）</div>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:8px">国内 CDN 对海外 DNS 常返 0.0.0.0，114 才拿到真实 IP · 分流修正：真实 IP → 阶段 6 全扫；命中 CDN → 80/443 不扫，但 3000-9200 高端口仍扫（常代理同一后端）</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2;font-size:12px">↓ <span style="color:#838A95">真实 IP 支路 · CDN 高端口支路</span></div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">6</span><span style="font-weight:500">端口与服务发现</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">masscan → nmap -sCV 主引擎</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">a_scan.py 三阶段（零依赖备用引擎）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">Quake 导航页读全端口（含非 HTTP）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">同 IP 多站横向（弱站突破）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">IP 段聚类 /24 分析</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">蜜罐识别（全端口开放即跳过）</span>
+      <span style="font-size:12px;background:#E9F6FF;border:1px solid #C8E8FE;border-radius:999px;padding:2px 9px">FOFA③ ip 全端口 + C 段邻居</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">fscan 1000 端口表 · EHole</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #838A95;border-radius:999px;padding:2px 9px">证书C · nmap ssl-cert / httpx -tls-grab</span>
+    </div>
+    <div style="background:#FFFFFF;border:1px solid #EBEDF1;border-radius:8px;padding:8px;margin-top:8px">
+      <div style="font-size:12px;font-weight:500">v2.0 指纹深挖子块</div>
+      <div style="font-size:12px;color:#838A95;margin-top:2px">favicon MD5 → Hunter web.icon 反查 · 宝塔面板（32 位 hex Cookie + 302 /login + "入口校验失败"）· Nginx catch-all 差分（3 随机路径 size 一致；真 404=146B）· Java 中间件矩阵（Tomcat /manager · WebLogic /console+T3 · Spring Actuator · Jenkins 等九种）· wafw00f · Cookie 指纹（PHPSESSID / JSESSIONID）</div>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:8px">IP 段聚类：同段 5+ 域名=核心集群重点 · 独段单域名=弱防护独立系统 · SAN 新域名过范围校验回流阶段 4 · 自签名证书=内部系统暴露公网强信号 · 高危端口对照 + 版本 CVE 映射 → 备注列</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">7</span><span style="font-weight:500">Web 深挖与截图（7a 存活呈现 / 7b 路由泄露）</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">7a gowitness 截图主引擎</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">httpx 存活 / 标题 / 跳转 / tech-detect</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">登录页识别（login/sso/oa/admin/密码框）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">7b 50 条常见路由 spray</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">目录爆破 ffuf + SecLists</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">JS 源码端点挖掘 LinkFinder</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">API 文档路径 /swagger.json /openapi.json /graphql</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">版本漂移 /api/v1 / /mobile/v1 / /legacy</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">Actuator 链 env→heapdump→jolokia</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">泄露文件 20+（.git/.env/backup.zip/db.sql）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">CDN 响应差分枚举（502 存在/404 不存在/403 拒绝）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">隐藏参数 arjun/x8 · 绕过矩阵</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">Actuator 优先级：env（泄露凭据）→ heapdump（JVM 搜密码）→ jolokia（RCE）→ gateway/routes · 路径穿越确认 ..;/ → 502=存在被过滤 vs 404=真不存在 · robots.txt/sitemap Disallow=提示清单 · 截图文件名=表格行号，登录页优先</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2">↓</div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#1A2029;border-radius:6px;padding:1px 8px">8</span><span style="font-weight:500">输出与数据治理（总表 + 7 sheet）</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">Python + openpyxl 主引擎</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">7 sheet：equity / domains / ips / urls / systems / social / todos</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">域名五级标注（公开/未验证/内网/独立IP段/云部署）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">重点资产标签（UAT/独立IP段/云部署/MinIO/HR/SSO）</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">精度分级 A-F 治理</span>
+      <span style="font-size:12px;background:#FFFBF5;border:1px solid #F5A623;border-radius:999px;padding:2px 9px">边收集边落库 · 黑板事实 upsert</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">SQLite 周期 diff · quake_export --merge 多源合并</span>
+    </div>
+    <div style="font-size:12px;color:#838A95;margin-top:6px">交付：xlsx（总表八列 + 7 明细 sheet）+ 截图目录 + SQLite 全量库 · body / 无引号搜索结果绝不混入可信集 · 资产去重 host+ip+domain 必填其一，source=icp/dns/fofa/xiaolanben 溯源</div>
+  </div>
+
+  <div aria-hidden="true" style="text-align:center;color:#B0B7C0;line-height:1.2;font-size:12px;margin-top:4px">↑ 主干结束 · 以下为两条并行横向线（阶段 2 启动，与主干同步至阶段 7）</div>
+
+  <div style="background:#F0FAF4;border:1px solid #BFE5CC;border-radius:12px;padding:12px;margin-top:4px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#2F7D4F;border-radius:6px;padding:1px 8px">P1</span><span style="font-weight:500">并行线 · 人员与信息泄露 OSINT</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px;font-weight:500">Sourcegraph 流式 API 主通道</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">GitHub / Gitee dork · grep.app</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">语雀 · 网盘 · Telegram</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">招标公告四合一提取（系统名/厂商版本/部署地址/联系人）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">招聘 JD 技术栈泄露</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">微博/脉脉/领英/CSDN · 手机号/QQ/邮箱反查</span>
+    </div>
+    <div style="font-size:12px;color:#5B7C68;margin-top:6px">反哺点：系统名/厂商+版本 → 阶段 4 域名猜测 + 阶段 7 找登录页 · Sourcegraph 关键词必须特定（完整域名/邮箱/系统名，泛词全无关）· 人员溯源链路图：IP→域名→WHOIS→邮箱/手机/QQ→社交→JD→系统名 · 挂马/弱管理信号深挖</div>
+  </div>
+
+  <div style="height:8px"></div>
+
+  <div style="background:#F0FAF4;border:1px solid #BFE5CC;border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#FFFFFF;background:#2F7D4F;border-radius:6px;padding:1px 8px">P2</span><span style="font-weight:500">并行线 · 供应链专项（双路核心）</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">A 路：测绘引擎（cert/domain/ip 反查资产）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #1A2029;border-radius:999px;padding:2px 9px;font-weight:500">B 路：WebSearch（供应商/人员/招投标）—— 两路互相不可替代</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">六维度清单（域名/Web系统/人员/供应商/招投标/高价值资产）</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">供应商案例页挖掘 → 同款系统其他单位实例</span>
+      <span style="font-size:12px;background:#FFFFFF;border:1px solid #EBEDF1;border-radius:999px;padding:2px 9px">supply_chain_collect.py（cert→domain 限 8→高价值 IP 限 6，内置 15s 间隔）</span>
+    </div>
+    <div style="font-size:12px;color:#5B7C68;margin-top:6px">反哺点：供应商同款系统（如电力行业朗坤 LiEMS / 木联能 / 致远 A8 + 对应 Quake 语法）→ 阶段 6/7 扩展横面 · 主域名集群按 registrableDomain 分组可视化</div>
+  </div>
+
+  <div style="background:#F0F4FA;border:1px solid #C9D6EC;border-radius:12px;padding:12px;margin-top:12px">
+    <div style="font-weight:500;font-size:13px">六引擎测绘面板（跨阶段服务：FOFA ①②③ + 证书 A/B/C + 全程补查）</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-top:8px">
+      <div style="background:#FFFFFF;border:1px solid #EBEDF1;border-radius:8px;padding:8px;font-size:12px"><div style="font-weight:500">决策树</div><div style="color:#838A95;margin-top:2px">大企业：Subfinder→HackerTarget→Quake→FOFA→Hunter · 中小企业：免费先行再上配额 · 内部系统：cert 反查 · ICP 需求：FOFA icp / Hunter</div></div>
+      <div style="background:#FFFFFF;border:1px solid #EBEDF1;border-radius:8px;padding:8px;font-size:12px"><div style="font-weight:500">配额纪律</div><div style="color:#838A95;margin-top:2px">FOFA 200 次/日 + ≥15s 间隔防 429 · Hunter 500 积分/天（参数 base64 编码）· Quake 100 条上限 → 子域名 / IP 段细分拼凑 · ZoomEye/Shodan 前端直查</div></div>
+      <div style="background:#FFFFFF;border:1px solid #EBEDF1;border-radius:8px;padding:8px;font-size:12px"><div style="font-weight:500">精度铁律</div><div style="color:#838A95;margin-top:2px">Quake A 级 domain 可信 / D 级 body 70-99% 误报不入可信集 · 中小企业 body 例外：IP≤10 且标题全指向目标 · FOFA 证书用点号语法 cert.subject.cn=</div></div>
+    </div>
+  </div>
+
+  <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:12px;padding:10px 12px;font-size:12px;color:#838A95;margin-top:8px">贯穿底座：SQLite 幂等 / 断点续跑 / --only-new 增量 · scope 校验器拦截越界 · 合规护栏（仅授权资产 / 限速避峰）· 边收集边落库（防上下文丢失）· 60s 超时自动转后台异步收结果 · 资产主键=域名 / IP:port 多来源交叉去重</div>
+</div>

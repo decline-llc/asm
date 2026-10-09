@@ -1,0 +1,33 @@
+<div style="background:#FFFFFF;width:100%;padding:14px;box-sizing:border-box;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#1A2029;font-size:13px;line-height:1.5">
+  <div style="font-weight:600;font-size:14px;margin-bottom:2px">部署拓扑：代码在 Windows · 工具在 WSL</div>
+  <div style="font-size:11px;color:#838A95;margin-bottom:10px">性能成立前提：工具重 I/O 全留 WSL 原生 fs，跨边界只有命令行与 tar 结果包</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:10px;padding:10px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">Windows 主机 <span style="font-weight:400;color:#838A95">C:\projects\asm\（代码）</span></div>
+      <div style="font-size:12px;color:#4A5160">
+        · <b>asm/</b> 编排包：CLI · 8 阶段 + P1/P2 调度<br>
+        · <b>db.py</b> SQLite 主库（单一事实源）<br>
+        · <b>panel/</b> 六引擎 API（httpx 直连）<br>
+        · <b>browser/</b> Playwright 小蓝本/爱企查<br>
+        · <b>库级能力</b>：dnspython 暴力枚举 · OSINT<br>
+        · 产出：xlsx 总表+7 sheet · data/ · venv
+      </div>
+    </div>
+    <div style="background:#F9FAFB;border:1px solid #EBEDF1;border-radius:10px;padding:10px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">WSL2 Ubuntu-22.04 <span style="font-weight:400;color:#838A95">~/asm-ws/（工具）</span></div>
+      <div style="font-size:12px;color:#4A5160">
+        · <b>bin/</b> Go 八工具：subfinder dnsx httpx naabu nuclei katana ffuf gowitness<br>
+        · <b>apt</b>：nmap · masscan · dig · google-chrome（.deb 直装）<br>
+        · <b>tools/</b>：OneForAll(venv) · a_scan.py · wafw00f<br>
+        · <b>wordlists/</b>：SecLists（约500MB）<br>
+        · <b>results/&lt;jobid&gt;/</b> 原始产出（原生 fs）
+      </div>
+    </div>
+  </div>
+  <div style="background:#F0F4FA;border:1px solid #C9D6EC;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:12px">
+    <b>bridge.py 桥接协议</b>：wsl.exe 子进程（root 场景 -u root，nmap/masscan 裸套接字）· 超时在 WSL 侧 timeout 强制 · 60s 未完成自动转后台轮询 .done · 数据交换只走管道（stdin→tee 进 / tar→stdout 出），<b>禁 /mnt/c 重 I/O、禁依赖 \\wsl$</b>
+  </div>
+  <div style="background:#FFF9F0;border:1px solid #F5C98A;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:12px;color:#7C4A03">
+    边界判定规则：<b>外部二进制 → WSL；库级能力 → Windows 代码内</b>。测试零风险设计：单测全离线 fixtures · 集成用本地假目标服务器（/actuator/env、/.git/HEAD 等 mock）· 半真实仅被动+自有域名
+  </div>
+</div>

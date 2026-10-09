@@ -1,0 +1,25 @@
+profile: demo
+authorization: false
+targets:
+  company: 示例母公司
+  brands: [示例品牌]
+  roots: [example.invalid]
+  ip_cidrs: [192.0.2.0/24]
+  extra_persons: []
+scope:
+  include: []
+  exclude_saas: ["*.qq.com", "*.alicdn.com"]
+rates:
+  fofa_min_interval: 15
+  fofa_daily: 200
+  hunter_daily: 500
+limits:
+  http_timeout: 5
+supply_chain:
+  cert_domain_limit: 8
+  hv_ip_limit: 6
+  vendor_list: []
+web:
+  urls: []
+output:
+  dir: data
