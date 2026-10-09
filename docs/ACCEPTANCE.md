@@ -16,7 +16,7 @@
 | 18/18 doctor | 最终 exit 0，18 项全部通过；data/validation/doctor.json | 已通过 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |
-| GitHub | main 已推送 `49044d1`、`fad9370`；本地/远端 SHA 一致；首轮四环境 CI 全部通过 | 已验证，最终部署记录追加中 |
+| GitHub | 最终代码 `a362545` 已推送 main；本地/远端 SHA 一致；最终四环境 CI [37921900265](https://github.com/decline-llc/asm/actions/runs/37921900265) 全部通过 | 已验证；收尾文档随后同步 |
 
 `ruff` 与 `pip check` 全绿，sdist 和 wheel 构建成功。wheel 仅包含 Python 包，运行 profiles/fixtures/init-wsl 仍需仓库 editable 安装。
 

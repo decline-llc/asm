@@ -69,3 +69,11 @@
 - 最终 `asm doctor --json-output` **exit 0，18/18 全部通过**，证据 `data/validation/doctor.json`；包含 OneForAll 普通用户导入、字典存在、根权限、Chromium 与磁盘/桥接延迟。
 - 已验证显式 GBK 管道下 CLI 输出可解析 UTF-8 JSON；`pip check` 与 `git diff --check` 通过。八报表视觉核验、24 项本地完整测试和构建证据保持有效。
 - CI 已配置只改文档时跳过重复运行；代码或配置变更仍验证 Windows/Linux × Python 3.11/3.12。完整设计缺口、DNS fake-IP 与待实网输入保持明示，未宣称 v2.0 DoD 全项完成。
+
+### 批次 6 · 远端最终核验
+
+- 最终代码提交 `a3625450bb67fe9c44f318bb0732814c5476918e` 已推送 main；`git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main` 完全一致。
+- [最终 CI 37921900265](https://github.com/decline-llc/asm/actions/runs/37921900265) 四个 job 全部 success：Ubuntu/Windows × Python 3.11/3.12，均完成依赖与浏览器安装、ruff、非 WSL 测试和构建。前两轮 CI 亦通过。
+- GitHub 固定代码 commit 的 docs/ACCEPTANCE.md 已可直接读取，含 24 passed、18/18 及完整设计缺口说明，确认记录已进入远端。
+- 本地 JUnit 最终 24 tests、0 failures、0 errors、0 skipped；doctor 18 项全绿；敏感 .env、数据库、报表、截图均被忽略。
+- 本次收尾仅更新文档；最终文档提交推送后，再核对 main SHA 与工作区，实际最终 SHA/时间保存到被忽略的 `docs/PUSH_RECEIPT.local.json`，避免在提交正文中自引用自身 SHA。

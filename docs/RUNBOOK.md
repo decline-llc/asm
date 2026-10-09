@@ -27,4 +27,4 @@ SecLists 默认按 `tools/tool-lock.json` 固定版本稀疏检出所需字典�
 
 Windows CLI 也可在本次调用前设置 `$env:ASM_SKIP_APT='1'` 或 `$env:ASM_SECLISTS_FULL='1'`，bootstrap 只接收 0/1 并显式传入 WSL。APT 阶段须 root；新机器执行完整安装，不跳过 APT。
 
-当前系统 DNS 受本机代理 fake-IP 影响，`example.com` 返回 198.18.0.0/15 地址。doctor 的网络检查仅证明 DNS 可响应；真实 DNS/CDN/归属验收需要在配置中指定可信上游或由用户调整代理模式。
+当前系统 DNS 受本机代理 fake-IP 影响，`example.com` 返回 198.18.0.0/15 地址。doctor 的网络检查仅证明 DNS 可响应；Stage 4/5 当前使用系统 DNS，真实 DNS/CDN/归属验收需用户先调整系统或代理 DNS 设置。profile 多解析商配置接入仍需继续实现。
