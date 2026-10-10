@@ -4,7 +4,7 @@
 
 环境事实已更新：正式提权通道可执行 PowerShell Core 7.6.5；WSL2 Ubuntu 24.04.4 可用；项目 `.venv` 为 Windows Python 3.11.9。原 Session 001 的拒绝访问属于历史记录。命令必须显式使用 `pwsh.exe`，不要用 Windows PowerShell 5.1。
 
-已验证：完整测试 47 passed in 64.58s，无 skip；包括离线核心、本地 HTTP/截图/八表报告/15s 配额、真实 WSL 后台回收与 root nmap、原生 dnsx/dig 三上游与 CNAME 异常，以及真实 OneForAll 核心离线 HTTP 流程。接管候选已进入报告 todos。WSL 上游按 dig → Windows → dnsx 选择可用观测，各来源保留；默认优先 114.114.114.114。推送及最新四环境 CI 以 ACCEPTANCE/WORKLOG 的实际结果为准。
+已验证：完整测试 47 passed in 64.58s，无 skip；包括离线核心、本地 HTTP/截图/八表报告/15s 配额、真实 WSL 后台回收与 root nmap、原生 dnsx/dig 三上游与 CNAME 异常，以及真实 OneForAll 核心离线 HTTP 流程。接管候选已进入报告 todos。WSL 上游按 dig → Windows → dnsx 选择可用观测，各来源保留；默认优先 114.114.114.114。最新代码 019f6e4 已推送 main，四环境 CI 4/4 success，各 38 非 WSL 测试通过；9 项原生 WSL 已在本机完整回归通过。链接和最终文档回执以 ACCEPTANCE/WORKLOG 为准。
 
 工具在 `/home/longchuanli/asm-ws`，固定版本在 `tools/tool-lock.json`；项目只通过 stdin/tar 管道交换数据。当前 WSL 环境需为异步工具保留 Windows Popen 客户端，否则孤儿 Linux 任务可能被回收。
 
@@ -15,3 +15,5 @@
 DNS 原始解析观测位于阶段目录 dns-observations.json；按来源、上游、差异及 CNAME 状态组织的证据在 dns-evidence.json；可用记录在 dns.json/SQLite。Stage 6 和报告优先读取 facts 中 selected；解析失败时不会从旧记录恢复扫描地址。CNAME 外部终点只是证据，不扩大目标白名单。takeover_probe 默认关闭，开启后只在主动授权模式请求原始域名，指纹命中也只标 review。
 
 OneForAll 调度现已接入 Stage 4。固定 v0.4.5 主流程即使关闭 brute/dns/req 仍触发 wildcard/SRV，且会转成注册域；只能使用本项目 `tools/oneforall_runner.py` 的 Collect + 原生 SQLite/JSON 导出路径。默认五模块，支持七个公开来源；HTTP 主机白名单、关闭重定向、TLS 验证、8 MiB 上限；目标/付费模块不允许。日志、数据库与临时文件每任务独立，第三方源码不改。先导出去重前观测保留所有来源；AlienVault 两接口在进程中取并集。只入库范围内域名，工具 IP/端口不作为资产证据。成功任务可复用，模块/HTTP 失败 rc=2、整任务超时 rc=124，结果部分保留并进入 review；原生离线流程已验证，公网可达性/覆盖率待真实输入。
+
+WSL Web 工具帮助已只读核对，保存在 data/validation/web-tool-help/。httpx 使用 -j/-r/-allow/-duc，保持默认不跟随跳转；ffuf 默认不跳转，需设置 -rate 并解析原生 JSON；katana 默认 -fs rdn 且跟随跳转，接入必须指定精确 crawl-scope、-dr/-duc，回环验证越界请求零到达。gowitness scan file 支持 --chrome-path/--chrome-proxy/--write-jsonl，但浏览器子资源/导航的范围约束尚待实现，不可仅依赖输入 URL 过滤便启用。

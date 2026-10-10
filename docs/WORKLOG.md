@@ -137,3 +137,11 @@
 - 更新 README、HANDOFF、COVERAGE、ACCEPTANCE、RUNBOOK、SOURCES 及工具/测试/夹具说明，明确真实 vendor 核心离线验收与公网提供商可达性/覆盖率的区别。后续优先 WSL Web 工具接入。
 - JUnit 核对 47 tests / 0 failures / 0 errors / 0 skipped。九个实际 OneForAll 任务（含两 root 与失败重试）的原始文件复制至被忽略的 data/validation/oneforall/，index.json 汇总 rc/状态；全部 network_attempts=0。原生第三方 `git diff --exit-code HEAD --` 为 0，源码无修改。
 - 推送前远端 main 仍为基础 1e8267f；git diff --check 通过，.env、全部验证数据与本地 push receipt 被忽略。本批代码提交与四环境 CI 的实际结果随后追加。
+
+### 批次 3 · 推送与远端验收
+
+- 已提交 `019f6e472faa16f5dd5ee2ca0b84f1b9d1e7fe37`（20 个文件）并成功推送 main；本地 HEAD 与远端 refs/heads/main 一致，推送后工作区干净。
+- 最新四环境 CI [38018126858](https://github.com/decline-llc/asm/actions/runs/38018126858) 已触发，head 为上述代码提交；Ubuntu 两项已 success，Windows 两项仍在浏览器安装，最终结论随后追加。
+- 等待期间只读核对已部署 httpx/ffuf/katana/gowitness 帮助，均 exit 0，文本保存 data/validation/web-tool-help/。httpx 有 JSONL、显式 resolver/IP allow 和关闭更新检查；ffuf 默认不跟随跳转且可限制 rate；katana 默认 rdn 范围并跟随跳转，下一批必须显式设置 scope、disable-redirects 和 disable-update-check。gowitness 支持 Chrome 路径/代理/JSONL；尚需解决浏览器每个请求的范围控制，未调用任何原生 Web 扫描。
+- 最终 CI [38018126858](https://github.com/decline-llc/asm/actions/runs/38018126858) **4/4 success**，run head 为 019f6e472faa16f5dd5ee2ca0b84f1b9d1e7fe37。四环境均 ruff 全绿、**38 passed / 9 WSL deselected**、sdist/wheel 构建成功；Ubuntu 3.11/3.12 测试分别 20.62s/21.32s，Windows 3.11/3.12 分别 24.00s/29.84s。九项原生 WSL 另在本机 47 项完整回归中通过。CI 摘要保存 data/validation/oneforall-ci.json。
+- 收尾只同步三份文档，代码保持已验证版本，不触发重复 CI；再次推送后核对 main SHA 和工作区，最终文档 SHA/UTC 时间保存到被忽略的 docs/PUSH_RECEIPT.local.json。公网提供商可达性和已知子域覆盖率仍未验证；下一批优先 WSL Web 工具。
