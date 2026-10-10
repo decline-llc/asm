@@ -114,3 +114,26 @@
 - 等待远端期间只读核对 OneForAll v0.4.5 原生 CLI help，exit 0；brute/dns/req 默认开启，下一批接入须显式关闭并让 Stage 5 统一处理解析，参数与未完成状态记入 HANDOFF。未运行公网扫描。
 - 最终代码 CI [38015955639](https://github.com/decline-llc/asm/actions/runs/38015955639) **4/4 success**，run head 为 385c02d196076f3f0205780a25c92fc1766ab878；Windows/Ubuntu × Python 3.11/3.12 全部完成浏览器安装、ruff、31 非 WSL 测试（4 WSL deselected）及 sdist/wheel 构建。四项 WSL 验收另在本机完整 35 项测试中通过。
 - 本次最终提交仅同步 ACCEPTANCE/WORKLOG/HANDOFF，不重跑已通过的代码 CI；推送后对照 main SHA 和工作区，实际最终文档 SHA/UTC 时间保存到被忽略的 docs/PUSH_RECEIPT.local.json，避免正文自引用提交 SHA。
+
+## 2026-10-10 · Session 004 · OneForAll 调度接入
+
+- 从 1e8267f 干净 main 继续；执行仍显式使用 PowerShell Core 7.6.5 和正式提权通道。
+- 核对原生 WSL 固定 commit 源码，发现关闭 brute/dns/req 仍会触发 wildcard/SRV；check.cdx 是 crossdomain.xml 主动访问，并非 archive CDX。包装器直接调用被动 Collect 与原生数据库/导出步骤，精确保留授权 root，不采用主流程的注册域扩张。
+- 支持七个核验过的公开被动来源，默认五个，避免与既有 crt.sh/HackerTarget 重复；排除目标站点/DNS检查及付费 API 模块。按来源限定 HTTP 主机、关闭自动重定向、限制响应和超时，每任务数据库、临时文件与日志独立，不修改第三方源码。
+- 原生去重只保留首个来源；因此先导出去重前观测，再保留原生 JSON 输出。Windows 仅合并白名单域名及 oneforall:来源，不直接导入工具 IP/端口字段，交由 Stage 5 统一解析。
+- 验证将覆盖真实 WSL/vendor 的离线响应流程、来源合并、被动隔离、失败/超时和幂等；公网服务与已知子域覆盖率仍待自有目标输入。
+
+### 批次 1 · 真实工具采集与边界验证
+
+- 增加真实 WSL 离线 transport 夹具，运行实际七个采集模块、Module、SQLite 和 JSON 导出；阻断所有 socket connect/getaddrinfo，确认无隐藏 wildcard/SRV、目标 HTTP 或外部网络请求。第三方源码保持原样。
+- 首轮真实工具测试 4 passed / 1 failed：上游模糊提取还保留输入 root，测试预期误少算七条来源；纠正期望并保留全局/root 双重范围过滤。未将范围外域名加入资产。
+- 核对 AlienVault 发现第二次赋值覆盖第一端点结果；进程内合并子域集合，夹具使用两个端点各有一个独有子域，确认都进入导出与来源观测。超时线程明确标 timed_out，避免仅日志报警但任务误成功。
+- 定向 `pytest tests/unit/test_oneforall.py tests/integration/test_wsl.py -k oneforall`：**12 passed in 27.49s**（其余 4 个 WSL 测试 deselected）。覆盖 Stage 4 后台调度及来源合并、离线模式不启动工具、七来源、独立 root 数据库、成功复用、空结果、HTTP 部分失败、模块/任务超时和失败重试。
+- 新增 requests 作为 dev 测试依赖；生产 WSL 使用其已固定的独立 vendor venv。ruff 全绿；完整回归、依赖检查和构建进行中。
+
+### 批次 2 · 完整回归与推送准备
+
+- 完整 `ASM_TEST_WSL=1 python -m pytest -q --junitxml=data/validation/pytest.xml`：**47 passed in 64.58s**，零失败/错误/跳过，包含 9 个真实 WSL 测试。ruff、pip check 全绿，sdist/wheel 构建成功。
+- 更新 README、HANDOFF、COVERAGE、ACCEPTANCE、RUNBOOK、SOURCES 及工具/测试/夹具说明，明确真实 vendor 核心离线验收与公网提供商可达性/覆盖率的区别。后续优先 WSL Web 工具接入。
+- JUnit 核对 47 tests / 0 failures / 0 errors / 0 skipped。九个实际 OneForAll 任务（含两 root 与失败重试）的原始文件复制至被忽略的 data/validation/oneforall/，index.json 汇总 rc/状态；全部 network_attempts=0。原生第三方 `git diff --exit-code HEAD --` 为 0，源码无修改。
+- 推送前远端 main 仍为基础 1e8267f；git diff --check 通过，.env、全部验证数据与本地 push receipt 被忽略。本批代码提交与四环境 CI 的实际结果随后追加。

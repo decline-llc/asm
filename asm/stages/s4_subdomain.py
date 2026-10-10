@@ -12,6 +12,7 @@ from ..pipeline import StageResult
 from ..scope import is_local, normalize_host
 from ..utils.constants import DNS_PREFIXES
 from ..utils.dns import DNSSettings, parse_endpoint, record_value
+from . import oneforall
 
 
 def resolve(domain, rtype="A", nameserver=None):
@@ -44,6 +45,7 @@ def enumerate_dns(root, *, resolver=resolve, threads=60):
 def run(ctx):
     count, notes = 0, []
     dns_settings = DNSSettings.from_config(ctx.config)
+    oneforall_settings = oneforall.settings(ctx.config)
     collected = []
     def accept(domain, source):
         nonlocal count
@@ -62,9 +64,17 @@ def run(ctx):
             accept(item["domain"], item["source"])
     else:
         for root in sorted(ctx.scope.roots):
+            if not ctx.scope.contains(root):
+                continue
             if is_local(root) or ctx.target_local:
                 accept(root, "seed")
                 continue
+            collector = None
+            if oneforall_settings.enabled:
+                try:
+                    collector = oneforall.submit(ctx, root, oneforall_settings)
+                except (RuntimeError, ValueError, OSError) as exc:
+                    notes.append(f"OneForAll {root} submission: {type(exc).__name__}: {exc}")
             try:
                 handle = ctx.jobs.run("subfinder", ["-d", root, "-silent", "-duc", "-o", "{job}/subdomains.txt"],
                     stage="4", timeout=ctx.config.get("limits", {}).get("subfinder_timeout", 900),
@@ -74,6 +84,8 @@ def run(ctx):
                 if handle.rc == 0 and result_path.exists():
                     for domain in result_path.read_text(encoding="utf-8").splitlines():
                         accept(domain, "subfinder")
+                else:
+                    notes.append(f"subfinder {root} failed/missing output, rc={handle.rc}")
             except RuntimeError as exc:
                 notes.append("subfinder: " + str(exc))
             with httpx.Client(timeout=30, follow_redirects=False) as client:
@@ -114,6 +126,11 @@ def run(ctx):
                         accept(asset.host, panel.name)
                 finally:
                     panel.close()
+            if collector is not None:
+                items, errors = oneforall.ingest(ctx, root, collector)
+                collected.extend(items)
+                count += len(items)
+                notes.extend(errors)
             if ctx.scope.authorized and not ctx.passive_only:
                 def trusted_resolve(domain):
                     answers = []
@@ -129,4 +146,6 @@ def run(ctx):
                 for domain, _ in records:
                     accept(domain, "dns_brute")
     ctx.write("subdomains.json", collected)
+    ctx.write("oneforall-evidence.json", {root: ctx.db.get_fact("oneforall:" + root) for root in sorted(ctx.scope.roots)
+                                         if ctx.db.get_fact("oneforall:" + root) is not None})
     return StageResult("partial" if notes else "completed", count, notes)

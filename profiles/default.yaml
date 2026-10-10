@@ -24,6 +24,16 @@ limits:
   http_timeout: 15
 quake:
   split_over: 100
+oneforall:
+  enabled: true
+  modules:
+    - modules.certificates.certspotter
+    - modules.datasets.rapiddns
+    - modules.datasets.anubis
+    - modules.intelligence.alienvault
+    - modules.intelligence.threatminer
+  module_timeout: 45
+  request_timeout: 15
 dns:
   resolvers: ["1.1.1.1", "114.114.114.114", "8.8.8.8"]
   preferred_resolver: "114.114.114.114"

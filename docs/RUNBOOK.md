@@ -29,6 +29,33 @@ Windows CLI 也可在本次调用前设置 `$env:ASM_SKIP_APT='1'` 或 `$env:ASM
 
 当前系统 DNS 受本机代理 fake-IP 影响，`example.com` 返回 198.18.0.0/15 地址。doctor 的网络检查仅证明 DNS 可响应。Stage 4 字典及 Stage 5 已接入显式上游；不修改系统 DNS。其它外部工具和 HTTP 请求仍按其运行环境解析，实网归属验收必须核对可信地址。
 
+## OneForAll 被动收集
+
+Stage 4 为每个范围内 DNS root 在原生 WSL 后台启动 OneForAll，同时处理 subfinder 和现有被动来源。dry-run、target-local 和 localhost 不启动它。可在 profile 设置 `oneforall.enabled: false` 关闭；省略配置时也使用以下生效默认值，它们参与恢复指纹：
+
+```yaml
+oneforall:
+  enabled: true
+  modules:
+    - modules.certificates.certspotter
+    - modules.datasets.rapiddns
+    - modules.datasets.anubis
+    - modules.intelligence.alienvault
+    - modules.intelligence.threatminer
+  module_timeout: 45
+  request_timeout: 15
+limits:
+  oneforall_timeout: 3600
+```
+
+另外允许 `modules.certificates.crtsh` 和 `modules.datasets.hackertarget`，默认不启用以避免与现有来源重复。模块只能选这七个；不能配置目标探测、DNS、爆破、付费 API 或默认全模块。module_timeout 上限 300 秒，request_timeout 上限 60 秒。上游按线程分别 join，完整任务另受 Linux timeout 限制。
+
+包装器核对 `tools/tool-lock.json` 固定 commit，只调用 Collect 与原生数据库/导出步骤，保留输入 root，不扩张到父域。HTTP 限定各模块的公开服务主机、GET/HEAD，关闭重定向，启用 TLS 验证，响应最多 8 MiB。RapidDNS 在这个固定版本使用 HTTP；若服务跳转或返回非 2xx，记录 partial，不跟随跳转。公网服务可达性仍需现场确认。
+
+每任务独立保存 `vendor-results/result.sqlite3`、各模块 JSON、日志和 `oneforall.json` 原生去重输出；`oneforall-observations.json` 在去重前保存，避免上游只保留首个来源。AlienVault 的两个端点在本次进程中合并，第三方源码文件不修改。Windows 仅导入请求 root 下、全局白名单内的域名及 oneforall:来源；工具生成的 IP/80 端口等未经验证字段不入资产表，解析仍交由 Stage 5。
+
+阶段目录 `oneforall-evidence.json` 保存 jobid、模块状态、HTTP 请求状态、接受/排除/异常记录。部分失败仍保留其余来源的有效结果，并写入 `oneforall_partial` review 待办。模块超时/HTTP 失败返回 rc=2，整任务超时 rc=124；只有完整成功且本地结果目录仍存在的相同工具/参数/输入任务可复用。需要全新采集时，使用新 profile/output 项目数据库；`--resume` 只控制阶段恢复，不关闭工具级成功缓存。
+
 ## DNS 阶段配置与证据
 
 每个 profile 可添加以下设置；省略时使用这些默认值，最终有效值参与恢复指纹：

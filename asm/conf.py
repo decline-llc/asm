@@ -9,6 +9,7 @@ import yaml
 from dotenv import load_dotenv
 
 from .utils.dns import DNSSettings
+from .utils.oneforall import OneForAllSettings
 
 
 @dataclass(frozen=True)
@@ -71,5 +72,6 @@ def load_config(profile="default", root=None):
                    "max_cname_hops": dns_settings.max_hops, "dnsx": dns_settings.dnsx,
                    "windows_verify": dns_settings.windows_verify, "reject_fake_ip": dns_settings.reject_fake_ip,
                    "takeover_probe": dns_settings.takeover_probe}
+    data["oneforall"] = OneForAllSettings.from_config(data).as_config()
     load_dotenv(root / ".env", override=False)
     return Config(data, path.resolve(), root)
