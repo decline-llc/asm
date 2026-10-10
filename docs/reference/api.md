@@ -1,8 +1,34 @@
-# 搜索 API：独立调用与结果保存
+# 搜索 API：通用调用、保存与排错
 
-主流程当前自动用 FOFA/Quake，其它四家只有适配器。下例是本项目 Python 类的人工调用约定，不是新增 asm search 命令，也不表示六家账户已实测通过。各家查询语法、环境变量、OPTIONS 见专页。
+> 状态：主流程**自动调用 FOFA/Quake**；Hunter/ZoomEye/Shodan/Censys **只有适配器**（未接主流程路由）
+> 凭据：Windows `.env`（与 WSL subfinder 的 `provider-config.yaml` **完全分开**，见下）
+> 核对日期：2026-10-10（源码核对：[asm/panel/base.py](../../asm/panel/base.py) 与各引擎源码）
+> 说明：本页是**人工独立调用约定**，不是新增的 `asm search` 命令，也不表示六家账户已实测通过。
 
-在 PowerShell 7、仓库根目录执行。先创建 customer profile、配置批准范围和 .env，再编辑 ENGINE/QUERY/OPTIONS；空 key 不会变成公共免费 API。
+## 1. 用途、场景与局限
+
+- **用途**：在不改代码的前提下，用项目已有的引擎类做受控的人工搜索，并把结果以统一 JSONL 候选格式留存。
+- **适用场景**：核对查询语法、评估数据时效、小批量补充线索。
+- **局限**：**没有通用 `asm search`/`asm ingest` 命令**；人工 JSONL **不自动入库**、不升级置信度；保存的是**经解析+范围过滤的候选**，不是完整原始 API 响应（完整响应归档/自动路由待实现）。异常可能留下部分结果。
+
+## 2. 接入状态、.env、认证与凭据边界
+
+| 引擎 | .env 变量 | 认证方式（当前代码） | 主流程 |
+|---|---|---|---|
+| FOFA | `FOFA_EMAIL`、`FOFA_KEY` | GET 查询参数 `email`/`key` | 已接入（Stage 4 / p2） |
+| Quake | `QUAKE_TOKEN` | 请求头 `X-QuakeToken` | 已接入（Stage 4） |
+| Hunter | `HUNTER_KEY` | GET 查询参数 `api-key` | 仅适配器 |
+| ZoomEye | `ZOOEYE_KEY` | 请求头 `API-KEY` | 仅适配器 |
+| Shodan | `SHODAN_KEY` | GET 查询参数 `key` | 仅适配器 |
+| Censys | `CENSYS_ID`、`CENSYS_SECRET` | Basic auth（Legacy v2） | 仅适配器 |
+
+- **凭据只用占位符**，不写真实 key 进文档/日志/样例；**含 key 的 URL（FOFA/Hunter/Shodan）在日志与分享前必须脱敏**。
+- **subfinder 的提供商 key 在 WSL `~/.config/subfinder/provider-config.yaml`**，与这里的 Windows `.env` **完全分开、不自动同步**（见 [subfinder.md](subfinder.md)）。
+- 空变量自动跳过，不会变成公共免费 API。Censys 新 PAT 不能填进旧 `CENSYS_SECRET` 当支持（见 [censys.md](censys.md)）。
+
+## 3. 场景命令：人工独立调用（PowerShell 7，仓库根目录）
+
+> 前置：已创建 customer profile、配置批准范围与 `.env`；编辑 `ENGINE`/`QUERY`/`OPTIONS` 后运行。范围用 `passive_only=True` 只过滤域名归属、不发起主动探测。
 
 ```powershell
 @'
@@ -58,16 +84,43 @@ print(path.resolve())
 '@ | .\.venv\Scripts\python.exe -
 ```
 
-保存的是经过解析和范围过滤的候选 JSONL，不是完整原始 API 响应；不自动导入资产或升级置信度。异常可能留下部分结果，需记录返回码和采集状态。完整响应归档、脱敏与自动适配器路由仍需另行实现。
+**关键行为**：`panel.search()` 经 `MappingEngine.request()` 发请求（带持久限速与 429 单次退避）；`scope.contains(asset.host)` 做范围过滤；`candidate_only: true` 明确这是候选而非确认资产；异常只打印异常类型（避免泄露含 key 的 URL）。输出 `data/customer/manual-api/<engine>-<UTC>.jsonl`。
 
-FOFA 至少先调用一次账户接口，仍受 ≥15 秒/每项目 UTC 日≤200 请求限制；其它引擎也使用本项目持久限速/配额。不同 profile 不共享账本。查询额度：`python -m asm quota --profile customer`，不发网络请求。
+## 4. 限速与配额
 
-| 情况 | 核对 |
-|---|---|
-| 401/403 或业务拒绝码 | key/套餐/API 权限/接口版本；不只看主页 200 |
-| 429 | Retry-After、本地限速与平台剩余额度 |
-| 空结果 | 查询语法、分页、平台数据时效、scope 过滤 |
-| TLS/连接超时 | DNS/代理/握手路径；本机 HTTPS 可达不等于每次 API 成功 |
-| 需要分享错误 | HTTP 错误 URL 可能含认证参数，先脱敏再分享 |
+- 所有引擎共用项目持久 RateLimiter（默认 min_interval=1s、daily=200）；FOFA 强制 ≥15s、≤200/日（含失败与账户信息调用），见 [fofa.md](fofa.md)。
+- 账本**按 profile 隔离**，不跨项目共享；查看 `python -m asm quota --profile customer`（不发请求）。
+- 配额/套餐以各平台账户为准；本地限额是上限保护，不代表平台实际可用量。
 
-离线解析验证：`python -m pytest tests/unit/test_panel.py -q`。依据：[base.py](../../asm/panel/base.py) 和各引擎源码；命令入口详见 [asm.md](asm.md)。
+## 5. 输出格式与保存
+
+- **候选 JSONL**：每行 `{"source","query","observed_utc","candidate_only":true,"asset":{...}}`。不是原始 API 响应。
+- **解析方法**：逐行 `json.loads`；`asset` 字段与 `models.Asset` 对应。
+- **脱敏**：样例与日志中的 key/令牌用占位符；真实目标域名可保留（属授权范围）。
+
+## 6. 错误分类（区别于“空结果”）
+
+| 类别 | 表现 | 处理 |
+|---|---|---|
+| HTTP 错误 | 401/403/404/500 等 | 查 key/套餐/接口版本；401/403 不通过缩短限速解决 |
+| 业务错误 | HTTP 200 但响应 `code`/`error` 非成功 | 看 message；语法或账户拒绝 |
+| 限速 | HTTP 429 | 看 `Retry-After`、本地限速与平台剩余额度 |
+| 成功但空 | 结果数组为空 | 核对语法、分页、平台数据时效、scope 过滤 |
+| 结果截断 | 达到每页上限但未翻完 | 提高 `max_pages` 或分批 `start`/`page`/`cursor` |
+| TLS/连接超时 | 握手/超时 | 查 DNS/代理/握手路径；主页可达不等于 API 成功 |
+
+## 7. 结果衔接、去重与复核
+
+- 衔接：候选 → 人工核对 → 必要时有正式适配器/Stage 接入后入库。
+- 复核：与 Stage 5 DNS、Stage 6 端口复核交叉；搜索结果**不直接**写成确认资产或漏洞。
+- 独立验证：`python -m pytest tests/unit/test_panel.py -q` 离线验证六家解析/分页逻辑（不发请求）。
+
+## 8. 常见失败与排错
+
+见上表“错误分类”。补充：多家同时失败先查本机网络/代理与 DNS；单家失败查该家 key/套餐/接口变化（接口迁移如 Censys Legacy→Platform）。
+
+## 9. 官方来源与核对记录
+
+- 依据源码：[asm/panel/base.py](../../asm/panel/base.py)（RateLimiter、MappingEngine.request、ingest）、各引擎源码（fofa/quake/hunter/zoomeye/shodan/censys）。
+- 命令入口详见 [asm.md](asm.md)；各引擎查询语法/字段见各自专页。
+- 待验证：六家真实账户的语法/字段/分页/配额；Censys Platform v3 迁移。

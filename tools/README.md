@@ -12,7 +12,7 @@
 | Web | httpx、katana、ffuf、gowitness、wafw00f、Chrome | bin/、tools/wafw00f/.venv/、/usr/bin/ |
 | 模板工具 | nuclei | bin/；当前流水线不自动执行漏洞模板 |
 | 字典 | SecLists | wordlists/SecLists/ |
-| 可选扩展 | Amass、gau、waybackurls、LinkFinder、arjun、x8 | 后续单独选择安装；当前未安装 |
+| 可选扩展 | Amass、gau、waybackurls、LinkFinder、arjun、x8 | 当前**未安装**；调研笔记见 [docs/reference](../docs/reference/README.md) 对应专页 |
 
 八个二进制的版本、官方 URL 与 SHA-256 见 `tool-lock.json`。安装前校验下载摘要，重复安装复用已经校验的缓存。APT 包与 Chrome 版本在 WSL `manifests/installed.txt` 中记录；Python 工具各有独立 venv，兼容 Ubuntu 的 externally-managed Python。
 

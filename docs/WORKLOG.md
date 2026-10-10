@@ -174,3 +174,16 @@
 - 本批代码与 reference 提交 `5e8913fd5307b63f384c96be3891d7121fd9e81b`，44 个文件，git diff --cached --check 通过。已推送 main，本地与远端 refs/heads/main SHA 一致，推送后工作区干净。新四环境 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) head 与代码提交相符；最终结论随后追加。
 - 最终 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) **run success、4/4 jobs success**。Ubuntu/Windows × Python 3.11/3.12 均完成浏览器安装、ruff、非 WSL pytest 与隔离 sdist/wheel 构建，全部无失败步骤；九项真实 WSL 在本机 60 项完整回归中通过。API 状态证据保存 data/validation/report-formats-ci.json。
 - 收尾仅同步 HANDOFF/ACCEPTANCE/WORKLOG，不改已验证代码、不触发重复 CI；最终推送后核对 main SHA 与工作区，最终文档 SHA/UTC、报告/CI 证据入口与 reference 数量保存 docs/PUSH_RECEIPT.local.json。
+
+## 2026-10-10 · Session 007 · 工具 reference 完善为操作手册
+
+- 目标：把 `docs/reference/` 从场景命令卡片完善为可直接查阅、复用、维护的操作手册；只改文档，不改代码、不安装/升级工具、不做公网扫描。
+- 依据：本机已保存的工具 help（`data/validation/reference-help/`、`tool-help/`、`web-tool-help/`）、`tools/tool-lock.json` 版本锁、以及 `asm/` 调用源码（panel 各引擎、s4–s8、tools/oneforall_runner.py、tools/dns_probe.py、tools/scanners/a_scan.py、scope/precision/db）。Windows 侧版本本机复测：Python 3.11.9、Playwright 1.63.0、httpx 0.28.1、openpyxl 3.1.5、tldextract 5.4.0、dnspython 2.9.0、asm-workbench 0.1.0；`.env` 六个引擎变量均为空（仅核对键名，未输出值）。
+- 执行环境说明：本会话沙箱对 `wsl.exe` 返回 E_ACCESSDENIED，无法现场重跑 WSL `--help`/版本命令；因此 WSL 工具以**已保存的本机 help 原文 + 版本锁 + 源码**为准核对，并在各页标注证据类型（本机帮助核对/回环实测/官方文档核对/待验证）。fake-IP（198.18.0.0/15）沿用既有观测记录并标注需复测，未当作永久结论。
+- 每个工具页补齐九要素：用途/场景/局限/安装位置/版本/核对日期、实际接入状态（已自动调用/只有适配器/仅安装/未安装）、输入准备与场景命令（单目标/批量/端口协议/超时/限速/并发/DNS/代理/认证/重试，且每段命令带运行环境/前置/参数含义/输出位置/预期结果/失败判定表）、原生输出格式与脱敏样例+字段解析、结果衔接与是否入 ASM 库、去重/来源/时间戳/独立复核、常见失败与排错、官方来源/证据/待验证。
+- 搜索引擎页另补：`.env` 变量与认证方式（并区分含 key 的 URL 需脱敏）、查询语法（域名/IP/证书/标题/正文/组织）、分页/额度/限速、HTTP 错误/业务错误/成功空结果/截断的区分、当前代码支持范围与接口迁移（Censys Legacy v2 vs Platform v3/PAT 单列对比）。明确只有 FOFA/Quake 进主流程，其余四家仅适配器。
+- 新增 6 个**未安装**调研工具专页：amass、gau、waybackurls、linkfinder、arjun、x8。全部显著标注“尚未安装、调研笔记、待安装核验”，命令/参数区分“官方文档核对”与“待安装后核对”；waybackurls 与 LinkFinder 因官方 README 抓取受限，除版本/定位外全部标待核对、不预写参数。调研只采用官方文档/官方仓库/pkg.go.dev/PyPI/crates.io 等官方渠道。
+- 更新 `docs/reference/README.md` 索引：新增 6 个调研工具行；统一证据标记约定与“去重与核对总则”（域名大小写/末尾点/IDNA/范围/泛解析、端口 host+port+proto 且 TCP/UDP 分开、URL 不盲目删参、多来源合并保留来源与时间、搜索/端口/指纹/模板命中分别确认）。更新 `tools/README.md` 可选扩展行指向新专页。reference 由 26 增至 32 文件。
+- 核对来源汇总：本机 help（data/validation/…）、tools/tool-lock.json、asm/ 与 tools/ 源码、官方文档（FOFA/Quake/Shodan/Censys 迁移指南/Playwright/Chrome Headless/nmap、各 ProjectDiscovery 与 ffuf/gowitness/wafw00f 仓库）、官方渠道（owasp-amass.github.io、pkg.go.dev、PyPI、crates.io）。
+- 待验证项：六家搜索引擎真实账户验收、Censys Platform v3/PAT 迁移、WSL Web 工具（httpx/gowitness/ffuf/katana）接入前的范围控制回环证明、可信 DNS 路径建立后的实网一致性、6 个调研工具的安装与 `--help` 核验、masscan 完整实际扫描验收、IPv6 主动端口链路原生实测。
+- 本批未修改 WSL 工具安装、系统 DNS/代理/防火墙；未调用带凭据 API；`.env`/运行数据/验证产物继续不提交。
