@@ -171,3 +171,6 @@
 - docs/reference/ 共 26 文件：18 个工具、6 个搜索引擎、索引与 API 公共调用；每页记录版本/已接入状态、场景命令、输出、利用/去重/核对及排错。原生 help 保存 data/validation/reference-help/（masscan 固定版本 help 的 rc=1 为已知特殊响应）；全部 reference 链接有效。命令示例未进行公网资产扫描，手动结果没有自动导入能力。
 - 本批未调用带凭据搜索接口，未修改 WSL 工具安装、系统 DNS/代理/防火墙；公共 53 返回 fake-IP 与 Censys Legacy v2 迁移等原有缺口保持明确。报告数据、验证产物、.env 和本地 push receipt 继续不提交。后续仍先建立可信 DNS 路径，再接入 WSL Web 工具。
 - 已同步 README、HANDOFF、ACCEPTANCE、RUNBOOK、OPERATIONS、COVERAGE、目录/工具/测试说明；推送与新四环境 CI 的实际结果随后追加。
+- 本批代码与 reference 提交 `5e8913fd5307b63f384c96be3891d7121fd9e81b`，44 个文件，git diff --cached --check 通过。已推送 main，本地与远端 refs/heads/main SHA 一致，推送后工作区干净。新四环境 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) head 与代码提交相符；最终结论随后追加。
+- 最终 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) **run success、4/4 jobs success**。Ubuntu/Windows × Python 3.11/3.12 均完成浏览器安装、ruff、非 WSL pytest 与隔离 sdist/wheel 构建，全部无失败步骤；九项真实 WSL 在本机 60 项完整回归中通过。API 状态证据保存 data/validation/report-formats-ci.json。
+- 收尾仅同步 HANDOFF/ACCEPTANCE/WORKLOG，不改已验证代码、不触发重复 CI；最终推送后核对 main SHA 与工作区，最终文档 SHA/UTC、报告/CI 证据入口与 reference 数量保存 docs/PUSH_RECEIPT.local.json。
