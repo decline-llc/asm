@@ -19,10 +19,21 @@ rates:
 limits:
   subfinder_timeout: 900
   oneforall_timeout: 3600
+  dns_timeout: 900
   masscan_timeout: 14400
   http_timeout: 15
 quake:
   split_over: 100
+dns:
+  resolvers: ["1.1.1.1", "114.114.114.114", "8.8.8.8"]
+  preferred_resolver: "114.114.114.114"
+  timeout: 3
+  workers: 8
+  max_cname_hops: 16
+  dnsx: true
+  windows_verify: true
+  reject_fake_ip: true
+  takeover_probe: false
 engine_priority:
   large_corp: [subfinder, hackertarget, quake, fofa, hunter]
   small_corp: [subfinder, hackertarget, censys, quake]

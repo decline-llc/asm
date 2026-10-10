@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from ..models import Asset
 from ..pipeline import StageResult
 from ..scope import ScopeError
+from ..utils.dns import DNSSettings, record_value
 from .s5_dns_cdn import scan_ports
 
 
@@ -67,14 +68,34 @@ def clusters(records):
             for net, hosts in nets.items()}
 
 
-def run(ctx):
+def selected_targets(ctx):
     settings = ctx.config.get("ports", {})
     targets = list(settings.get("targets", []))
     if not targets:
         targets = [str(net.network_address) for net in ctx.scope.networks if net.num_addresses == 1]
-        targets += [r["value"] for r in ctx.db.rows("SELECT DISTINCT value FROM dns_records WHERE rtype IN ('A','AAAA')")
-                    if ctx.scope.contains(r["value"])]
-    targets = list(dict.fromkeys(targets))
+        for row in ctx.db.rows("SELECT domain FROM domains"):
+            evidence = ctx.db.get_fact("dns:" + row["domain"])
+            if evidence is not None:
+                targets.extend(ip for values in evidence.get("selected", {}).values() for ip in values
+                               if ctx.scope.contains(ip))
+            else:
+                targets.extend(r["value"] for r in ctx.db.rows(
+                    "SELECT DISTINCT value FROM dns_records WHERE domain=? AND rtype IN ('A','AAAA')",
+                    (row["domain"],)) if ctx.scope.contains(r["value"]))
+    clean = []
+    reject = DNSSettings.from_config(ctx.config).reject_fake_ip
+    for target in dict.fromkeys(targets):
+        try:
+            ip = ipaddress.ip_address(target)
+            clean.append(record_value("A" if ip.version == 4 else "AAAA", target, reject_fake_ip=reject))
+        except ValueError as exc:
+            raise ScopeError("Port targets must be approved usable IPs; proxy fake-IP is rejected by default") from exc
+    return clean
+
+
+def run(ctx):
+    settings = ctx.config.get("ports", {})
+    targets = selected_targets(ctx)
     pending, count, notes = [], 0, []
     for target in targets:
         ctx.scope.assert_in_scope(target)
@@ -103,7 +124,8 @@ def run(ctx):
                 parse_ports(udp)
             scan_args = ["-sS", "-sU"] if udp else ["-sS"]
             port_spec = f"T:{ports},U:{udp}" if udp else ports
-            args = scan_args + ["-sV", "-sC", "-Pn", "-n", "--host-timeout", "120s", "-p", port_spec,
+            args = (["-6"] if ipaddress.ip_address(target).version == 6 else []) + scan_args + [
+                    "-sV", "-sC", "-Pn", "-n", "--host-timeout", "120s", "-p", port_spec,
                     "-oX", "{job}/nmap.xml", target]
             handle = ctx.jobs.run("nmap", args, stage="6", root=True, timeout=180, background=True)
             pending.append((target, ports, cdn, "nmap", handle))
@@ -122,7 +144,8 @@ def run(ctx):
             if not opened:
                 continue
             ctx.scope.assert_in_scope(target)
-            handle = ctx.jobs.run("nmap", ["-sS", "-sCV", "-Pn", "-n", "-p", ",".join(map(str, opened)),
+            family = ["-6"] if ipaddress.ip_address(target).version == 6 else []
+            handle = ctx.jobs.run("nmap", family + ["-sS", "-sCV", "-Pn", "-n", "-p", ",".join(map(str, opened)),
                                           "-oX", "{job}/nmap.xml", target], stage="6", root=True, timeout=180)
             ctx.jobs.wait(handle)
         assets = list(parse_nmap(ctx.jobs.result_dir(handle) / "nmap.xml"))

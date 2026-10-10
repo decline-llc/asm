@@ -65,8 +65,12 @@ def write_report(db, path):
                                     ",".join(tags), asset["source"], asset["confidence"], link])
     all_rows["equity"] = [[r.get(k) for k in HEADERS["equity"]] for r in companies.values()]
     for row in db.rows("SELECT * FROM domains ORDER BY domain"):
-        row["ip"] = ",".join(r["value"] for r in db.rows(
-            "SELECT DISTINCT value FROM dns_records WHERE domain=? AND rtype IN ('A','AAAA')", (row["domain"],)))
+        dns = db.get_fact("dns:" + row["domain"])
+        if dns is not None:
+            row["ip"] = ",".join(ip for rtype in ("A", "AAAA") for ip in dns.get("selected", {}).get(rtype, []))
+        else:
+            row["ip"] = ",".join(r["value"] for r in db.rows(
+                "SELECT DISTINCT value FROM dns_records WHERE domain=? AND rtype IN ('A','AAAA')", (row["domain"],)))
         all_rows["domains"].append([row.get(k) for k in HEADERS["domains"]])
     for row in db.rows("SELECT ip,min(cid) cid,count(DISTINCT port) ports_count,max(cdn) cdn "
                        "FROM assets WHERE ip IS NOT NULL AND ip!='' GROUP BY ip ORDER BY ip"):

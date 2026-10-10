@@ -77,3 +77,28 @@
 - GitHub 固定代码 commit 的 docs/ACCEPTANCE.md 已可直接读取，含 24 passed、18/18 及完整设计缺口说明，确认记录已进入远端。
 - 本地 JUnit 最终 24 tests、0 failures、0 errors、0 skipped；doctor 18 项全绿；敏感 .env、数据库、报表、截图均被忽略。
 - 本次收尾仅更新文档；最终文档提交推送后，再核对 main SHA 与工作区，实际最终 SHA/时间保存到被忽略的 `docs/PUSH_RECEIPT.local.json`，避免在提交正文中自引用自身 SHA。
+
+## 2026-10-10 · Session 003 · DNS/CDN 下一批实施
+
+- 从 eba0ee9 干净 main 恢复接力；既有推送与持续记录授权继续有效。
+- 沙箱助手启动仍失败，正式提权通道可用；Windows 命令继续显式使用 PowerShell Core 7.6.5。
+- 本批优先实现 WSL dnsx/dig、三解析商对比与国内修正、Windows 显式上游复核、CNAME 链、无效/fake-IP 隔离，以及向端口阶段传递选择后的地址。
+- 参数依据本机 dnsx 1.3.1 帮助与官方 dnsx/dnspython 文档；外部工具 I/O 继续只走原生 WSL，通过 stdin/tar 交换。
+- 验收只使用脱敏 DNS 数据和本地回环 DNS 服务器，不依赖未提供的实网域名/API credentials。
+
+### 批次 1 · 显式上游与证据衔接
+
+- 新增 DNS 参数校验与生效默认值；有效设置纳入 profile fingerprint，旧 profile 也不会复用原系统 DNS 阶段状态。
+- 原生 WSL stdlib dig 包装器查询 A/AAAA/MX/NS/CNAME，并追踪链终点、环路、上限、NXDOMAIN 和错误；dnsx 按各配置上游独立异步运行。Windows dnspython 使用 configure=False 复核指定上游。Stage 4 字典使用优先上游。
+- 保留按 source@resolver 的可用记录、过滤前观测和差异事实；同一上游按 dig → Windows → dnsx 选择成功观测，不将复核分歧合并为扫描地址。优先国内上游有可用 A/AAAA 时采用它，拒绝 unspecified/fake-IP；Stage 6 和域名报告使用 selected。
+- CNAME 外部链节点不扩大范围；默认不 HTTP 探测。主动授权且开启 takeover_probe 才请求原始域名，匹配 provider/status/error 文本后生成 review 证据；保存匹配文本与响应摘要，未执行注册或接管。
+- 修复恰好 max_cname_hops 时终点无 CNAME 被误标 max_hops 的边界；支持合法 null MX `0 .`；nmap IPv6 目标携带 -6（原生 IPv6 主动扫描仍待验收）。
+
+### 批次 2 · 回归与交付准备
+
+- 聚焦 DNS + 真实 WSL 验证：12 passed in 24.89s。三组 WSL 回环 DNS 服务真实 dnsx/dig 输出均已解析，国内/选定地址 192.0.2.20；0.0.0.0 和 198.18.0.8 留作拒绝证据，不进入可用记录。Windows 指定上游 A/AAAA/NXDOMAIN/超时独立通过。
+- 完整 `ASM_TEST_WSL=1 python -m pytest -q --junitxml=data/validation/pytest.xml`：**35 passed in 44.72s**，JUnit 0 failures / 0 errors / 0 skipped；包括 CNAME 环路/上限/恰好上限/悬空/超时、来源分歧不污染地址和报告旧记录不回退。
+- `ruff check asm scripts tests tools`、`pip check` 全绿，sdist/wheel 构建成功；CI 扩大静态检查至整个 tools 目录。未改工具安装，既有 18/18 doctor 环境证据保持有效。
+- 本批 `scripts/local-demo.py` exit 0，阶段 1/3/5/6/7/8 完成：3 TCP（8765/8766/8768）+ 1 UDP（8767）、4 assets、14 URLs、13 Web routes、0 quarantine；DNS → 端口 → Web → 报告链路保持有效，证据 data/validation/local-demo.json。
+- 脱敏实际 DNS 输出复制到被忽略的 data/validation/dns/multi-resolver/ 与 negative-cases/；.env、venv、验证数据和本地 push receipt 均确认不提交。
+- 推送前核对远端 main 仍为 eba0ee9，与当前基础 HEAD 一致。更新 README/HANDOFF/COVERAGE/ACCEPTANCE/RUNBOOK/SOURCES 及工具/测试说明；本批公网 DNS/CDN、HTTP 接管和 IPv6 端口验收的边界保持明确。

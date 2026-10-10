@@ -11,13 +11,15 @@ from ..panel.quake import Quake
 from ..pipeline import StageResult
 from ..scope import is_local, normalize_host
 from ..utils.constants import DNS_PREFIXES
+from ..utils.dns import DNSSettings, parse_endpoint, record_value
 
 
 def resolve(domain, rtype="A", nameserver=None):
     resolver = dns.resolver.Resolver()
     resolver.lifetime = 4
     if nameserver:
-        resolver.nameservers = [nameserver]
+        host, resolver.port = parse_endpoint(nameserver)
+        resolver.nameservers = [host]
     try:
         return [str(v).rstrip(".") for v in resolver.resolve(domain, rtype)]
     except dns.exception.DNSException:
@@ -41,6 +43,7 @@ def enumerate_dns(root, *, resolver=resolve, threads=60):
 
 def run(ctx):
     count, notes = 0, []
+    dns_settings = DNSSettings.from_config(ctx.config)
     collected = []
     def accept(domain, source):
         nonlocal count
@@ -112,7 +115,16 @@ def run(ctx):
                 finally:
                     panel.close()
             if ctx.scope.authorized and not ctx.passive_only:
-                wild, records = enumerate_dns(root, threads=ctx.config.get("rates", {}).get("dns_threads", 60))
+                def trusted_resolve(domain):
+                    answers = []
+                    for value in resolve(domain, nameserver=dns_settings.preferred):
+                        try:
+                            answers.append(record_value("A", value, reject_fake_ip=dns_settings.reject_fake_ip))
+                        except ValueError:
+                            continue
+                    return answers
+                wild, records = enumerate_dns(root, resolver=trusted_resolve,
+                    threads=ctx.config.get("rates", {}).get("dns_threads", 60))
                 ctx.db.domain(Domain(root, wildcard=int(wild), sources="dns"))
                 for domain, _ in records:
                     accept(domain, "dns_brute")

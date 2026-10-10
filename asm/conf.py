@@ -8,6 +8,8 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
+from .utils.dns import DNSSettings
+
 
 @dataclass(frozen=True)
 class Config:
@@ -62,5 +64,12 @@ def load_config(profile="default", root=None):
         raise ValueError("FOFA min interval must be >= 15 seconds")
     if data.get("rates", {}).get("fofa_daily", 200) > 200:
         raise ValueError("FOFA daily quota must be <= 200")
+    dns_settings = DNSSettings.from_config(data)
+    # Effective DNS defaults participate in resume fingerprints, including older profiles.
+    data["dns"] = {"resolvers": list(dns_settings.resolvers), "preferred_resolver": dns_settings.preferred,
+                   "timeout": dns_settings.timeout, "workers": dns_settings.workers,
+                   "max_cname_hops": dns_settings.max_hops, "dnsx": dns_settings.dnsx,
+                   "windows_verify": dns_settings.windows_verify, "reject_fake_ip": dns_settings.reject_fake_ip,
+                   "takeover_probe": dns_settings.takeover_probe}
     load_dotenv(root / ".env", override=False)
     return Config(data, path.resolve(), root)

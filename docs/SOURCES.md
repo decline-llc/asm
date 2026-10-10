@@ -17,5 +17,7 @@
 - [SecLists 固定 commit 递归 tree 与文件尺寸](https://api.github.com/repos/danielmiessler/SecLists/git/trees/190c6f7bd58c847ceadfe57d9853592737f059e8?recursive=1)
 - [exrex 0.12.0 官方发布](https://pypi.org/project/exrex/0.12.0/)
 - [Python 3.12 变更](https://docs.python.org/3.12/whatsnew/3.12.html)
+- [dnsx 官方用法](https://docs.projectdiscovery.io/opensource/dnsx/usage)（2026-10-10；运行参数同时核对本机固定 1.3.1 帮助，仅请求 A/AAAA/MX/NS/CNAME）
+- [dnspython Resolver 类](https://dnspython.readthedocs.io/en/stable/resolver-class.html)（2026-10-10；configure=False、指定 nameserver/port、lifetime 与 NXDOMAIN）
 
 面板已做脱敏格式回放，真实 API 能否继续使用必须以账户现场验证为准。服务政策和接口可能变化，不根据旧返回样例宣称 live 验收完成。

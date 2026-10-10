@@ -36,3 +36,19 @@ def test_resume_exact_config(project, tmp_path, monkeypatch):
     config.data["targets"]["brands"] = ["ChangedFixture"]
     third = run_pipeline(stages=["1"], passive_only=True, resume=True)
     assert third["1"]["status"] == "completed"
+
+
+def test_report_uses_corrected_addresses_and_failed_resolution(db, tmp_path):
+    db.domain(Domain("api.example.invalid"))
+    db.domain(Domain("failed.example.invalid"))
+    for domain in ("api.example.invalid", "failed.example.invalid"):
+        db.upsert("dns_records", {"domain": domain, "rtype": "A", "value": "192.0.2.1", "resolver": "old"},
+                  ("domain", "rtype", "value", "resolver"))
+    db.fact("dns:api.example.invalid", {"selected": {"A": ["192.0.2.20"], "AAAA": ["2001:db8::20"]}})
+    db.fact("dns:failed.example.invalid", {"selected": {"A": [], "AAAA": []}})
+    path = tmp_path / "report.xlsx"
+    write_report(db, path)
+    book = load_workbook(path)
+    ips = {row[0]: row[5] for row in list(book["domains"].values)[1:]}
+    assert ips == {"api.example.invalid": "192.0.2.20,2001:db8::20", "failed.example.invalid": None}
+    book.close()
