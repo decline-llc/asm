@@ -142,3 +142,13 @@ def test_takeover_probe_retains_fingerprint_and_uses_original_host(db, tmp_path,
     assert len(rows) == 1 and rows[0]["status"] == "review"
     evidence = json.loads(rows[0]["evidence"])
     assert evidence["matched_text"] == "NoSuchBucket" and len(evidence["body_sha256"]) == 64
+    from openpyxl import load_workbook
+    from asm.stages.s8_report import write_report
+    report = tmp_path / "report.xlsx"
+    counts = write_report(db, report)
+    book = load_workbook(report)
+    assert counts["todos"] == 1 and book["todos"]["A2"].value == "takeover_candidate"
+    assert book["todos"]["B2"].value == "https://app.example.invalid/"
+    assert '"provider": "Amazon S3"' in book["todos"]["C2"].value
+    assert book["todos"]["E2"].value == "review"
+    book.close()

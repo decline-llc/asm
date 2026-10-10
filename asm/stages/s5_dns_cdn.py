@@ -135,11 +135,14 @@ def probe_takeover(ctx, domain, terminal):
             provider = takeover_provider(terminal, reply.status, reply.text)
             if provider:
                 marker = next(text for name, _, _, text in TAKEOVER_FINGERPRINTS if name == provider)
+                evidence = json.dumps({"provider": provider, "terminal": terminal, "url": reply.url,
+                    "status": reply.status, "matched_text": marker,
+                    "body_sha256": hashlib.sha256(reply.text.encode()).hexdigest()})
                 ctx.db.upsert("takeovers", {"domain": domain, "kind": "CNAME", "provider": provider,
-                    "evidence": json.dumps({"terminal": terminal, "url": reply.url, "status": reply.status,
-                        "matched_text": marker, "body_sha256": hashlib.sha256(reply.text.encode()).hexdigest()}),
-                    "status": "review"},
+                    "evidence": evidence, "status": "review"},
                     ("domain", "kind", "provider"))
+                ctx.db.finding({"kind": "takeover_candidate", "url": reply.url, "evidence": evidence,
+                                "severity": "medium", "status": "review"})
                 return
     finally:
         client.close()

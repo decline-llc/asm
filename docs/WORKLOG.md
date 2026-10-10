@@ -102,3 +102,11 @@
 - 本批 `scripts/local-demo.py` exit 0，阶段 1/3/5/6/7/8 完成：3 TCP（8765/8766/8768）+ 1 UDP（8767）、4 assets、14 URLs、13 Web routes、0 quarantine；DNS → 端口 → Web → 报告链路保持有效，证据 data/validation/local-demo.json。
 - 脱敏实际 DNS 输出复制到被忽略的 data/validation/dns/multi-resolver/ 与 negative-cases/；.env、venv、验证数据和本地 push receipt 均确认不提交。
 - 推送前核对远端 main 仍为 eba0ee9，与当前基础 HEAD 一致。更新 README/HANDOFF/COVERAGE/ACCEPTANCE/RUNBOOK/SOURCES 及工具/测试说明；本批公网 DNS/CDN、HTTP 接管和 IPv6 端口验收的边界保持明确。
+
+### 批次 3 · 推送与远端验收
+
+- 代码与记录提交 `ded0c15883f2ac34c9a9d51dfe2ae242cb0e9518`，22 个文件；`git diff --cached --check` 通过，未包含运行数据或凭据。
+- 已成功 `git push origin main`；`git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main` SHA 完全一致，推送后工作区干净。
+- 四环境 CI [38015713303](https://github.com/decline-llc/asm/actions/runs/38015713303) 已触发，正在核对 Windows/Ubuntu × Python 3.11/3.12 的结果；最终结论随后追加。
+- 收尾核对发现 HTTP 指纹候选只写 takeovers 表，报告 todos 未包含它。追加 takeover_candidate finding，让 provider、终点、URL、状态、匹配文本、响应摘要和 review 状态进入报告；扩展既有指纹测试验证实际 xlsx 待办出口。
+- 追加修复验证：`ruff check asm scripts tests tools` 全绿；DNS/报告定向回归 **11 passed in 2.68s**，证据 data/validation/dns-report.xml。WSL 查询/端口部分未改，完整 35 项证据继续有效；最新代码将再次验证四环境 CI。

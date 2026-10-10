@@ -54,4 +54,4 @@ limits:
 
 阶段目录输出 dns-observations.json（过滤前解析观测）、dns-evidence.json（按来源/上游/链组织的证据及 selected）、dns.json（可用记录）；外部工具原始文件保留在任务目录。链外部终点只用于 DNS 证据，不加入目标集合。循环、跳数耗尽、超时标 partial；悬空 NXDOMAIN 只产生候选。
 
-takeover_probe 开启且主动授权时，才请求原始范围内域名的 HTTP(S)。命中 provider 后缀、状态码及错误文本才生成 review 项，保存 URL/状态/匹配文本/响应 SHA-256；403 私有桶不算接管。不会请求外部终点或注册资源。dry-run/target-local 继续使用隔离 fixtures，不能当成公网 DNS 验收。
+takeover_probe 开启且主动授权时，才请求原始范围内域名的 HTTP(S)。命中 provider 后缀、状态码及错误文本才生成 review 项，保存 URL/状态/匹配文本/响应 SHA-256，并以 takeover_candidate 出现在报告 todos；403 私有桶不算接管。不会请求外部终点或注册资源。dry-run/target-local 继续使用隔离 fixtures，不能当成公网 DNS 验收。

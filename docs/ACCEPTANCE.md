@@ -15,11 +15,11 @@
 | 真实 WSL/nmap | 完成/失败 marker、二进制 tar、root nmap 3 TCP + 1 UDP ；本地 CLI 4 assets / 14 URLs / 13 routes | 已通过 |
 | DNS 多上游 | WSL dnsx/dig 实际查询三组回环服务，五类记录、两跳 CNAME、CDN 指纹、0.0.0.0/fake-IP 隔离、优先地址交给 Stage 6 | 本地真实工具已通过 |
 | DNS 复核与异常 | Windows 指定 IP:port 上游 A/AAAA/NXDOMAIN/超时；WSL CNAME 环路、最大跳数、恰好上限终止、悬空、超时；同上游不同来源不混入扫描结果 | 已通过 |
-| DNS 报告与接管 | 域名 sheet 使用 selected，失败时不回退旧地址；可选 HTTP 指纹保存匹配文本/响应摘要；被动模式不探测 HTTP、CNAME/NXDOMAIN 单独不生成 takeover | 报告逻辑及模拟 HTTP 通过；公网待实测 |
+| DNS 报告与接管 | 域名 sheet 使用 selected，失败时不回退旧地址；可选 HTTP 指纹保存匹配文本/响应摘要并进入 todos；被动模式不探测 HTTP、CNAME/NXDOMAIN 单独不生成 takeover；追加定向回归 11 passed in 2.68s | 报告逻辑及模拟 HTTP 通过；公网待实测 |
 | 18/18 doctor | Session 002 最终 exit 0，18 项全部通过；data/validation/doctor.json；本批未改工具安装 | 既有验收保持有效 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |
-| GitHub | 本批准备推送 main，代码 CI 结果将在本文件追加；Session 002 四环境 CI [37921900265](https://github.com/decline-llc/asm/actions/runs/37921900265) 已通过 | 本批远端核验进行中 |
+| GitHub | 本批代码 `ded0c15` 已推送 main，本地/远端 SHA 一致；四环境 CI [38015713303](https://github.com/decline-llc/asm/actions/runs/38015713303) 正在运行 | 推送已验证，CI 核验进行中 |
 
 `ruff` 与 `pip check` 全绿，sdist 和 wheel 构建成功。wheel 仅包含 Python 包，运行 profiles/fixtures/init-wsl 仍需仓库 editable 安装。
 
