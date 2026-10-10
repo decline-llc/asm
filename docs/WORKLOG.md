@@ -145,3 +145,17 @@
 - 等待期间只读核对已部署 httpx/ffuf/katana/gowitness 帮助，均 exit 0，文本保存 data/validation/web-tool-help/。httpx 有 JSONL、显式 resolver/IP allow 和关闭更新检查；ffuf 默认不跟随跳转且可限制 rate；katana 默认 rdn 范围并跟随跳转，下一批必须显式设置 scope、disable-redirects 和 disable-update-check。gowitness 支持 Chrome 路径/代理/JSONL；尚需解决浏览器每个请求的范围控制，未调用任何原生 Web 扫描。
 - 最终 CI [38018126858](https://github.com/decline-llc/asm/actions/runs/38018126858) **4/4 success**，run head 为 019f6e472faa16f5dd5ee2ca0b84f1b9d1e7fe37。四环境均 ruff 全绿、**38 passed / 9 WSL deselected**、sdist/wheel 构建成功；Ubuntu 3.11/3.12 测试分别 20.62s/21.32s，Windows 3.11/3.12 分别 24.00s/29.84s。九项原生 WSL 另在本机 47 项完整回归中通过。CI 摘要保存 data/validation/oneforall-ci.json。
 - 收尾只同步三份文档，代码保持已验证版本，不触发重复 CI；再次推送后核对 main SHA 和工作区，最终文档 SHA/UTC 时间保存到被忽略的 docs/PUSH_RECEIPT.local.json。公网提供商可达性和已知子域覆盖率仍未验证；下一批优先 WSL Web 工具。
+
+## 2026-10-10 · Session 005 · 工具/输出盘点与两端网络复核
+
+- 用户要求说明当前 Windows/WSL 已装工具、调用、输出保存/利用、去重核对、流水线搭建、API 配置、网络、最终报告与首页截图。本批完成只读盘点和操作文档，不新增扫描功能、不修改系统网络。
+- 正式提权通道使用 `pwsh.exe`（Core 7.6.5）；Windows Python 3.11.9 / WSL2 Ubuntu 24.04.4 及原生安装清单已核对。`python -m asm doctor --json-output` 重测 **18/18，exit 0**，保存 data/validation/doctor-current.json。
+- 只以布尔值核对 .env 搜索引擎凭据：全部为空，WSL_DISTRO=Ubuntu、WSL_USER 为发行版默认用户。当前自动引擎只有 FOFA/Quake，其余四家只有适配器；官方 Censys Platform 使用 PAT/v3，当前旧 v2 适配器尚未迁移。
+- 用 Windows httpx 和 WSL OneForAll venv requests，无凭据 HEAD 抽检 GitHub/PyPI/FOFA/Quake/crt.sh/CertSpotter 主页；两端均收到 HTTP 响应，状态依次 200/200/200/301/200/404。不跟随重定向且保留 TLS 验证，只证明当时传输可达，不证明账户或搜索查询成功。证据 network-windows.json/network-wsl.json。
+- 关键实网发现：两端系统 DNS，以及显式 1.1.1.1、114.114.114.114、8.8.8.8 的 UDP/TCP 53，对 example.com A 全返回 **198.18.0.122**；先前本地多解析商夹具验收保持有效，但本机显式公网上游仍受 fake-IP 影响。Stage 4/5 拒绝假地址不等于取得真实地址，全部拒绝可能没有后续 IP 目标。
+- WSL Google/Cloudflare HTTPS DNS 对照均 200，得到 104.20.23.154、172.66.147.243。Windows 初次 ConnectError/Google 握手超时，后续 Cloudflare 默认信任库及两家系统 trust store 请求均在 TLS 验证开启下成功；不把超时推断为证书问题。证据 network-doh-windows.json、network-doh-windows-detail.json、network-doh-wsl.json。当前 dns.resolvers 不支持 DoH URL，本批未修改 DNS/代理/防火墙。下一实施优先建立可信解析路径，再做实网资产核对。
+- 使用 spreadsheets 技能进行只读问答核验，bundled Python/openpyxl 读取现有 test xlsx，查看实际首页 PNG 与既有总表预览；未修改/重导出工作簿。test 报告八表：总表 4、equity 1、domains 1、ips 1、urls 14、systems 1、social 0、todos 14；截图 I2 相对链接指向已存在 screenshots/1.png，1280×720 Fixture Portal。是回环夹具，不是企业公网资产；data/test 下没有自动 HTML 报告。
+- 只读核对已部署 naabu/nuclei/wafw00f help，均 exit 0，保存 data/validation/tool-help/；沿用上批 Web 工具 help。工具二进制存在不等于已调度，nuclei 模板集也未作为已验收能力。
+- 新增 docs/OPERATIONS.md，详细说明每个工具的版本/状态/调用/输出用途、八表字段、原始证据、真实去重键与独立来源、三种模式、API 配置、网络限制。记录 p1/p2 当前顺序执行、默认 8 在它们之前，推荐显式 `...,p1,p2,8`。
+- 同步 README、HANDOFF、RUNBOOK、ACCEPTANCE、COVERAGE、SOURCES 和 docs 索引。git diff --check 通过，.env、验证数据、xlsx/PNG 和 PUSH_RECEIPT.local.json 被忽略。只改 Markdown，无需重复运行已通过的 47 项测试；最新代码仍 019f6e4，既有四环境 CI 4/4 success 有效。
+- 本批按用户既有授权提交并推送文档；收尾对照本地 HEAD、远端 main 与工作区，实际 SHA/UTC 和最新 doctor/联网证据入口保存到被忽略的 docs/PUSH_RECEIPT.local.json，避免正文自引用自身 SHA。

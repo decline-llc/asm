@@ -27,7 +27,7 @@ SecLists 默认按 `tools/tool-lock.json` 固定版本稀疏检出所需字典�
 
 Windows CLI 也可在本次调用前设置 `$env:ASM_SKIP_APT='1'` 或 `$env:ASM_SECLISTS_FULL='1'`，bootstrap 只接收 0/1 并显式传入 WSL。APT 阶段须 root；新机器执行完整安装，不跳过 APT。
 
-当前系统 DNS 受本机代理 fake-IP 影响，`example.com` 返回 198.18.0.0/15 地址。doctor 的网络检查仅证明 DNS 可响应。Stage 4 字典及 Stage 5 已接入显式上游；不修改系统 DNS。其它外部工具和 HTTP 请求仍按其运行环境解析，实网归属验收必须核对可信地址。
+Session 005（2026-10-10）重测 doctor 18/18，但系统 DNS 及显式 1.1.1.1、114.114.114.114、8.8.8.8 的 UDP/TCP 53 在 Windows/WSL 都把 `example.com` 返回为 198.18.0.122；显式上游没有避开 fake-IP。Stage 4/5 已过滤这些地址，过滤不等于取得真实地址。HTTPS DNS 对照得到公网地址，Windows 连接有波动；当前 dns.resolvers 不接受 DoH URL。先建立可信解析路径，再做实网 IP/归属核对；未修改系统 DNS/代理/防火墙。详细联网证据、API 状态、工具调用和输出说明见 [OPERATIONS.md](OPERATIONS.md)。
 
 ## OneForAll 被动收集
 

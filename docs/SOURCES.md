@@ -22,5 +22,8 @@
 - [Python 3.12 变更](https://docs.python.org/3.12/whatsnew/3.12.html)
 - [dnsx 官方用法](https://docs.projectdiscovery.io/opensource/dnsx/usage)（2026-10-10；运行参数同时核对本机固定 1.3.1 帮助，仅请求 A/AAAA/MX/NS/CNAME）
 - [dnspython Resolver 类](https://dnspython.readthedocs.io/en/stable/resolver-class.html)（2026-10-10；configure=False、指定 nameserver/port、lifetime 与 NXDOMAIN）
+- [Censys Platform API 迁移指南](https://docs.censys.com/docs/platform-api-transition-guide)（2026-10-10；新 v3 base URL、PAT/API Access role、旧 hosts/search 对应新 global/search/query；本项目旧适配器尚未迁移）
+- [Google Public DNS HTTPS JSON API](https://developers.google.com/speed/public-dns/docs/doh/json)（2026-10-10；用于 example.com 的只读 HTTPS DNS 对照，尚未接入生产 DNSSettings）
+- [Cloudflare DNS over HTTPS 请求说明](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/)（2026-10-10；JSON Accept header 与 HTTPS 对照，不等同于当前 UDP/TCP 上游已可信）
 
 面板已做脱敏格式回放，真实 API 能否继续使用必须以账户现场验证为准。服务政策和接口可能变化，不根据旧返回样例宣称 live 验收完成。
