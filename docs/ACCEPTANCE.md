@@ -19,7 +19,7 @@
 | 18/18 doctor | Session 002 最终 exit 0，18 项全部通过；data/validation/doctor.json；本批未改工具安装 | 既有验收保持有效 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |
-| GitHub | 本批代码 `ded0c15` 已推送 main，本地/远端 SHA 一致；四环境 CI [38015713303](https://github.com/decline-llc/asm/actions/runs/38015713303) 正在运行 | 推送已验证，CI 核验进行中 |
+| GitHub | 最新代码 `385c02d` 已推送 main，本地/远端 SHA 一致；最终四环境 CI [38015955639](https://github.com/decline-llc/asm/actions/runs/38015955639) 全部 success（Ubuntu/Windows × Python 3.11/3.12，各 31 非 WSL 测试通过、4 WSL deselected，ruff 与构建通过） | 已验证；收尾文档同步 |
 
 `ruff` 与 `pip check` 全绿，sdist 和 wheel 构建成功。wheel 仅包含 Python 包，运行 profiles/fixtures/init-wsl 仍需仓库 editable 安装。
 

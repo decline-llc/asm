@@ -110,3 +110,7 @@
 - 四环境 CI [38015713303](https://github.com/decline-llc/asm/actions/runs/38015713303) 已触发，正在核对 Windows/Ubuntu × Python 3.11/3.12 的结果；最终结论随后追加。
 - 收尾核对发现 HTTP 指纹候选只写 takeovers 表，报告 todos 未包含它。追加 takeover_candidate finding，让 provider、终点、URL、状态、匹配文本、响应摘要和 review 状态进入报告；扩展既有指纹测试验证实际 xlsx 待办出口。
 - 追加修复验证：`ruff check asm scripts tests tools` 全绿；DNS/报告定向回归 **11 passed in 2.68s**，证据 data/validation/dns-report.xml。WSL 查询/端口部分未改，完整 35 项证据继续有效；最新代码将再次验证四环境 CI。
+- 追加代码 `385c02d196076f3f0205780a25c92fc1766ab878` 已推送 main，本地/远端 SHA 一致。最新四环境 CI [38015955639](https://github.com/decline-llc/asm/actions/runs/38015955639) 已触发；以这一提交的结果作为最终代码验收。
+- 等待远端期间只读核对 OneForAll v0.4.5 原生 CLI help，exit 0；brute/dns/req 默认开启，下一批接入须显式关闭并让 Stage 5 统一处理解析，参数与未完成状态记入 HANDOFF。未运行公网扫描。
+- 最终代码 CI [38015955639](https://github.com/decline-llc/asm/actions/runs/38015955639) **4/4 success**，run head 为 385c02d196076f3f0205780a25c92fc1766ab878；Windows/Ubuntu × Python 3.11/3.12 全部完成浏览器安装、ruff、31 非 WSL 测试（4 WSL deselected）及 sdist/wheel 构建。四项 WSL 验收另在本机完整 35 项测试中通过。
+- 本次最终提交仅同步 ACCEPTANCE/WORKLOG/HANDOFF，不重跑已通过的代码 CI；推送后对照 main SHA 和工作区，实际最终文档 SHA/UTC 时间保存到被忽略的 docs/PUSH_RECEIPT.local.json，避免正文自引用提交 SHA。
