@@ -20,3 +20,6 @@ data/*
 profiles/local*.yaml
 tools/local/
 docs/PUSH_RECEIPT.local.json
+# 沙箱 ACL 修复临时产物（仅本机，不提交）
+.acl-recovery/
+.acl-recovery*/
