@@ -1,4 +1,5 @@
 import ipaddress
+import csv
 import re
 import shutil
 import math
@@ -9,6 +10,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from ..pipeline import StageResult
+from ..report_html import write_html
 
 HEADERS = {
     "总表": "序号/资产/端口/标题/技术栈/等级标注/来源/置信度/截图链接".split("/"),
@@ -26,31 +28,44 @@ def text_cell(value):
     if isinstance(value, str):
         value = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", value)[:32700]
         # External titles, names and evidence never become executable spreadsheet formulas.
-        if value.startswith(("=", "+", "-", "@")):
+        if value.lstrip(" \t\r\n").startswith(("=", "+", "-", "@")):
             return "'" + value
     return value
 
 
-def write_report(db, path):
+def report_paths(path):
     path = Path(path)
+    if path.suffix.lower() not in {".xlsx", ".csv", ".html"}:
+        raise ValueError("Report output must end in .xlsx, .csv, or .html; all three formats are exported")
+    return {"xlsx": path.with_suffix(".xlsx"), "csv": path.with_suffix(".csv"),
+            "html": path.with_suffix(".html"), "csv_dir": path.parent / (path.stem + "-csv")}
+
+
+def collect_rows(db, path):
     path.parent.mkdir(parents=True, exist_ok=True)
-    book = Workbook()
-    book.remove(book.active)
     all_rows = {name: [] for name in HEADERS}
     companies = {r["cid"]: r for r in db.rows("SELECT * FROM companies")}
     assets = db.rows("SELECT * FROM assets ORDER BY host,port,proto")
     url_rows = db.rows("SELECT * FROM urls ORDER BY url")
     screenshots = {}
+    screenshot_issues = {}
     for number, asset in enumerate(assets, 1):
         source = next((r["screenshot"] for r in url_rows if r["asset_id"] == asset["id"] and r["screenshot"]), "")
         link = ""
-        if source and Path(source).is_file():
-            dest = path.parent / "screenshots" / f"{number}.png"
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            if Path(source).resolve() != dest.resolve():
-                shutil.copyfile(source, dest)
-            link = f"screenshots/{number}.png"
-            screenshots[asset["id"]] = link
+        if source:
+            try:
+                if not Path(source).is_file():
+                    raise FileNotFoundError
+                dest = path.parent / "screenshots" / f"{number}.png"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if Path(source).resolve() != dest.resolve():
+                    shutil.copyfile(source, dest)
+                link = f"screenshots/{number}.png"
+                screenshots[asset["id"]] = link
+            except OSError:
+                screenshot_issues[number] = "截图文件缺失或无法复制"
+        else:
+            screenshot_issues[number] = "未采集首页截图"
         tags = []
         host = asset["host"].lower()
         if any(k in host for k in ("uat", "test", "dev", "sit")):
@@ -91,6 +106,12 @@ def write_report(db, path):
         all_rows["social"].append([row.get(k) for k in HEADERS["social"]])
     for row in db.rows("SELECT * FROM findings WHERE status!='rejected' ORDER BY id"):
         all_rows["todos"].append([row["kind"], row["url"], row["evidence"], row["severity"], row["status"]])
+    return all_rows, screenshot_issues
+
+
+def write_workbook(all_rows, path):
+    book = Workbook()
+    book.remove(book.active)
     for name, headers in HEADERS.items():
         sheet = book.create_sheet(name)
         sheet.append(headers)
@@ -123,6 +144,26 @@ def write_report(db, path):
             sheet.row_dimensions[row[0].row].height = min(300, max(22, lines * 15 + 6))
     book.save(path)
     book.close()
+
+
+def write_csv(headers, rows, path):
+    # UTF-8 BOM lets Windows Excel identify Chinese; newline='' preserves quoted multiline cells.
+    with path.open("w", encoding="utf-8-sig", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(headers)
+        writer.writerows([text_cell(value) for value in row] for row in rows)
+
+
+def write_report(db, path):
+    paths = report_paths(path)
+    all_rows, screenshot_issues = collect_rows(db, paths["xlsx"])
+    write_workbook(all_rows, paths["xlsx"])
+    write_csv(HEADERS["总表"], all_rows["总表"], paths["csv"])
+    paths["csv_dir"].mkdir(parents=True, exist_ok=True)
+    for name, headers in HEADERS.items():
+        if name != "总表":
+            write_csv(headers, all_rows[name], paths["csv_dir"] / f"{name}.csv")
+    write_html(HEADERS, all_rows, paths["html"], screenshot_issues=screenshot_issues)
     return {name: len(rows) for name, rows in all_rows.items()}
 
 
@@ -130,4 +171,4 @@ def run(ctx):
     path = ctx.stage_dir.parent.parent / "report.xlsx"
     counts = write_report(ctx.db, path)
     ctx.write("report-counts.json", counts)
-    return StageResult(count=counts["总表"], notes=[str(path)])
+    return StageResult(count=counts["总表"], notes=[str(p) for p in report_paths(path).values()])

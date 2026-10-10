@@ -1,12 +1,12 @@
 # 工具、数据与流水线操作说明
 
-核查日期：2026-10-10，Session 005。本说明依据本机安装清单、当前代码、CLI/help、只读报告检查和两端网络实测；版本不代表上游最新版。安装、接入调度、本地验收和公网验收分别记录。
+核查日期：2026-10-10。工具/API/网络盘点来自 Session 005；CSV/HTML 导出与工具 reference 在 Session 006 更新。版本不代表上游最新版，安装、接入调度、本地验收和公网验收分别记录。
 
 ## 1. 现在能交付什么
 
-这是可复用的互联网暴露面收集与资产归属治理框架。每个项目有独立配置、SQLite 数据库、原始工具结果、阶段证据和八表 xlsx；主动 Web 阶段还生成首页 PNG。结果表会填入采集到的数据，既可作为资产清单，也可作为人工核对入口。
+这是可复用的互联网暴露面收集与资产归属治理框架。每个项目有独立配置、SQLite 数据库、原始工具结果、阶段证据，以及同一组八表的 xlsx/CSV/HTML 导出；主动 Web 阶段还生成首页 PNG。结果表会填入采集到的数据，既可作为资产清单，也可作为人工核对入口。
 
-当前自动报告是 `report.xlsx`，截图是外部 `screenshots/*.png`，不是嵌入 Excel 的图片。尚未实现自动 HTML 结果报告。根目录 `asm_full_design_v2.html`、`deploy_topology_v2.html` 是设计文档，不是扫描产物。完整 v2.0 方法尚未全部接入，见 [COVERAGE.md](COVERAGE.md)。
+Stage 8 和 `asm report` 默认同时生成 `report.xlsx`、总表 `report.csv`、七明细 `report-csv/*.csv`、`report.html`。xlsx 保留相对截图链接；HTML 内嵌可读取 PNG，单独搬走、离线或禁用 JavaScript 仍能阅读表格与图片。未采集/缺失/无法读取的图片会明确标注，报告不能恢复缺失截图。根目录 `asm_full_design_v2.html`、`deploy_topology_v2.html` 仍是原始设计文档。完整 v2.0 方法尚未全部接入，见 [COVERAGE.md](COVERAGE.md)。
 
 本机已有样例：`D:\Desktop\asm\data\test\report.xlsx`；它是回环测试结果，不是某家企业的公网资产。总表 4 行、urls 14 行、todos 14 行，首页截图 `data/test/screenshots/1.png` 为 1280×720 的 Fixture Portal。只有 Web 服务取得首页截图，普通 TCP/UDP 服务没有截图。
 
@@ -54,6 +54,8 @@ Windows 的 Python `httpx` 库与 WSL 的 ProjectDiscovery `httpx` 二进制是�
 WSL 还安装了 Git 和原生 Python 3.12。Amass、gau、waybackurls、LinkFinder、arjun、x8 当前未安装。不能把工具存在等同于所有功能已串入主流程。
 
 ### 3.1 从 PowerShell 7 调用
+
+逐个工具的场景命令、参数差异、输出核对和故障处理，统一维护在 [reference 索引](reference/README.md)。以下保留基础调用示例；已安装工具与六家 API 各有独立专页。
 
 优先使用 ASM 阶段入口，它会处理输入、原生目录、超时、日志、回收、解析和数据库：
 
@@ -177,7 +179,7 @@ flowchart LR
     D --> E[Windows 过滤 / 去重 / SQLite]
     B --> F[Windows API / Web / Playwright]
     F --> E
-    E --> G[report.xlsx + screenshots PNG]
+    E --> G[xlsx + CSV + 独立HTML + PNG]
 ```
 
 | 阶段 | 输入 → 行为 → 后续用途 |
@@ -192,9 +194,9 @@ flowchart LR
 | 7 | `web.urls` 或服务派生 URL → 有界 HTTP、基线/路径、标题/技术线索、PNG → Web 结果与 review |
 | p1 | 精确 OSINT 关键词/导入材料 → 人员/系统/待办线索 |
 | p2 | 证书/供应商/公告证据 → 系统与供应链待办 |
-| 8 | 可信数据库结果 → 八 sheet xlsx + 相对截图链接 |
+| 8 | 同一组可信结果 → 八 sheet xlsx、八表 CSV、内嵌截图的独立 HTML |
 
-**当前阶段编排顺序执行**；p1/p2 的名称不表示现在已并发。默认列表把 8 放在 p1/p2 前面；为包含支路新增结果，明确指定 `...,p1,p2,8`。WSL 后台任务与阶段内并发不等于全流水线阶段并发。
+**当前阶段编排顺序执行**；p1/p2 的名称不表示现在已并发。Session 006 已把默认阶段 8 移到 p1/p2 后，确保支路结果进入三格式报告；自定义 --stages 时也应指定 `...,p1,p2,8`。WSL 后台任务与阶段内并发不等于全流水线阶段并发。
 
 在 PowerShell 7 中运行：
 
@@ -210,8 +212,10 @@ Set-Location 'D:\Desktop\asm'
 .\.venv\Scripts\python.exe -m asm run --profile customer --stages 1,3,4,5,8 --passive-only
 # 已配置主动范围、人工材料和可信解析路径后，完整项目顺序
 .\.venv\Scripts\python.exe -m asm run --profile customer --stages 1,2a,2b,3,4,5,6,7,p1,p2,8 --resume
-# 仅从已存在数据库刷新报告，不重新扫描
+# 仅从已存在数据库刷新三格式报告，不重新扫描
 .\.venv\Scripts\python.exe -m asm report --profile customer
+# 可用 .xlsx/.csv/.html 指定同一套导出的文件名前缀
+.\.venv\Scripts\python.exe -m asm report --profile customer --output data/customer/delivery.html
 ```
 
 `customer` 不是内置配置，需要创建 `profiles/customer.yaml`。`targets.company/brands/roots/ip_cidrs` 定义项目输入，`authorization: true` 才允许主动模式，`ports.targets` 可列出批准的具体 IP，`ports.engine` 当前选择 nmap 或 masscan，`web.urls` 可列出批准的具体 HTTP(S) 地址；这些目标不放 `.env`。不能仅写一个大 CIDR 就假定当前代码自动扫完整地址段。
@@ -226,6 +230,9 @@ Set-Location 'D:\Desktop\asm'
 D:\Desktop\asm\data\<profile>\
   asm.db                         标准化结果、来源、任务、配额、阶段状态、facts
   report.xlsx                    最终八表快照
+  report.csv                     总表，UTF-8 BOM
+  report-csv\*.csv               七张明细表，UTF-8 BOM
+  report.html                    八表与内嵌 PNG，可单独离线阅读
   screenshots\asset-<id>.png     原始首页 PNG
   screenshots\<序号>.png         按总表序号复制的交付 PNG
   stages\<stage>\*.json          该阶段证据与汇总
@@ -239,7 +246,9 @@ WSL 对应运行目录是 `/home/longchuanli/asm-ws/results/<jobid>/`。正常�
 
 重要阶段证据：Stage 4 `subdomains.json`、`oneforall-evidence.json`；Stage 5 `dns-observations.json`（过滤前）、`dns-evidence.json`（来源/上游/链/selected）、`dns.json`（可用记录）；Stage 8 `report-counts.json`。Web 状态/标题/技术线索存库，页面响应有长度上限，尚未自动保存全量目标网页 HTML。FOFA/Quake 当前主要保存标准化字段、来源与配额，未统一归档完整 API 原始响应；不要把其原始凭据或响应日志随报告分享。
 
-交付查看用 `report.xlsx + screenshots/` 一起打包，相对截图链接才有效；内部复查另留 `asm.db + stages/ + results/ + logs/`。等运行结束/关闭数据库后再复制数据库文件，避免只复制一个仍有未合并 WAL 的活动库。
+交付用 `report.xlsx + report.csv + report-csv/ + report.html + screenshots/`。xlsx/CSV 的相对截图路径需要 screenshots/；HTML 不依赖外部图片、CSS、脚本或目标网络请求，搜索功能仅使用内嵌脚本，关闭 JavaScript 仍可阅读。内部复查另留 `asm.db + stages/ + results/ + logs/`。等运行结束/关闭数据库后再复制数据库文件，避免只复制一个仍有未合并 WAL 的活动库。
+
+CSV 经 csv writer 正确处理逗号、双引号和多行，UTF-8 BOM 便于 Windows Excel 识别中文；以 =/+/-/@ 开头或前置空白后出现这些字符的文本添加单引号转义。HTML 对外部字段作字符转义并用 CSP 阻止外部资源/非授权脚本；每资产的 PNG 仅内嵌一次，表格中的截图链接定位到对应截图卡片。内嵌图片会增加 HTML 体积。
 
 ## 7. 如何去重与核对
 
@@ -318,4 +327,4 @@ Stage 4/5 拒绝 `0.0.0.0`、`::` 和默认 `198.18.0.0/15`，会避免把 fake-
 | social | name、role、company、email、phone、qq、platform、source |
 | todos | type、target、evidence、severity、next_step |
 
-总表行号对应 `screenshots/<序号>.png`，只有截图成功且文件存在才生成链接。被动模式、非 Web 服务、失败页或无可用浏览器结果可能没有截图。PNG 是实际浏览器页面证据，不能替代归属核对或漏洞确认。xlsx 有筛选、冻结首行、换行、来源和相对链接，公式注入已处理；HTML 报告、完整原始 API 归档、所有已安装工具调度和公网覆盖率仍有实施空间。
+总表行号对应 `screenshots/<序号>.png`，只有截图可复制时才生成相对链接。被动模式、非 Web 服务、失败页或无可用浏览器结果可能没有截图。PNG 是实际浏览器页面证据，不能替代归属核对或漏洞确认。xlsx 有筛选/冻结首行，CSV 适合导入，HTML 有八表导航/全文搜索/内嵌截图与缺失状态。三者来自同一组行；完整原始 API 归档、所有已安装工具调度和公网覆盖率仍有缺口。

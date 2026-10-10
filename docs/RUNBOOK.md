@@ -15,6 +15,8 @@ $env:ASM_TEST_WSL='1'
 .\.venv\Scripts\python.exe -m asm report --profile test
 ```
 
+Stage 8 与 report 命令默认导出 xlsx、总表 report.csv、七明细 report-csv/*.csv 和自包含 report.html。HTML 内嵌可读取截图，离线/禁用 JavaScript 仍可阅读；xlsx 的截图依旧用相对链接。`report --output data/test/delivery.html` 指定共同文件名前缀，也会生成 delivery.xlsx/delivery.csv/delivery-csv/。默认阶段 8 已在 p1/p2 后，自定义阶段顺序需自行把 8 放最后。各工具的场景命令与异常处理见 [reference](reference/README.md)。
+
 初次创建 venv 用本机已有 `D:\.pyenv\pyenv-win\versions\3.11.9\python.exe -m venv .venv`，然后 `pip install -e .[dev,browser]` 和 `python -m playwright install chromium`。不要改 pyenv 全局默认版本。
 
 WSL apt 如被系统自动更新占锁，等待释放。若提示 dpkg interrupted，先按实际 audit 修复；不要删除锁或杀自动更新进程。网络若受 Windows loopback 代理影响，使用可达的宿主网关代理做本次命令配置，不改系统默认 DNS/防火墙。

@@ -102,16 +102,21 @@ def stage(stage_name, profile, passive_only, target_local, dry_run):
 @click.option("--output", type=click.Path(path_type=Path))
 @click.option("--dry-run", is_flag=True)
 def report(profile, output, dry_run):
-    """Export trusted assets to the contractual 8-sheet workbook."""
-    from .stages.s8_report import write_report
+    """Export the same eight tables to XLSX, CSV and standalone HTML."""
+    from .stages.s8_report import report_paths, write_report
     config = load_config(profile)
     directory = config.output / "dry-run" if dry_run else config.output
     if not (directory / "asm.db").is_file():
         raise click.ClickException("No project database; run collection first")
     output = output or directory / "report.xlsx"
-    with Database(directory / "asm.db") as db:
-        counts = write_report(db, output)
-    click.echo(str(output.resolve()))
+    try:
+        paths = report_paths(output)
+        with Database(directory / "asm.db") as db:
+            counts = write_report(db, output)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    for kind, path in paths.items():
+        click.echo(f"{kind}: {path.resolve()}")
     click.echo(json.dumps(counts, ensure_ascii=False))
 
 

@@ -159,3 +159,15 @@
 - 新增 docs/OPERATIONS.md，详细说明每个工具的版本/状态/调用/输出用途、八表字段、原始证据、真实去重键与独立来源、三种模式、API 配置、网络限制。记录 p1/p2 当前顺序执行、默认 8 在它们之前，推荐显式 `...,p1,p2,8`。
 - 同步 README、HANDOFF、RUNBOOK、ACCEPTANCE、COVERAGE、SOURCES 和 docs 索引。git diff --check 通过，.env、验证数据、xlsx/PNG 和 PUSH_RECEIPT.local.json 被忽略。只改 Markdown，无需重复运行已通过的 47 项测试；最新代码仍 019f6e4，既有四环境 CI 4/4 success 有效。
 - 本批按用户既有授权提交并推送文档；收尾对照本地 HEAD、远端 main 与工作区，实际 SHA/UTC 和最新 doctor/联网证据入口保存到被忽略的 docs/PUSH_RECEIPT.local.json，避免正文自引用自身 SHA。
+
+## 2026-10-10 · Session 006 · CSV/独立 HTML 报告与工具 reference
+
+- 用户明确要求报告同时提供 CSV 与 HTML，HTML 保底查看截图；为每个工具单独编写不同情况的命令 reference。沿用既有 main 推送与及时记录授权，Windows 命令显式使用 PowerShell Core 7.6.5。
+- Stage 8 与 report 命令从同一组 SQLite 行生成 xlsx、总表 CSV、七份明细 CSV 和独立 HTML。任一 .xlsx/.csv/.html 输出后缀都指定同一报告基名；八表字段契约和已有 xlsx 样式保持。CSV 为 UTF-8 BOM，保留逗号/引号/换行，文本公式前缀（含前导空白）统一转义。
+- HTML 包含八张表、计数、全表搜索和截图状态，将已采集 PNG 内嵌为 data URI；不依赖外部脚本、样式或图片。所有外部字段转义，CSP 限制网络请求和非固定脚本；缺失、无权限及非 PNG 截图分别标注。未采集的图片无法靠报告恢复。默认 Stage 8 移到 p1/p2 后，显式 stages 仍需将 8 放最后。
+- 新增 13 项报告测试并扩展实际浏览器集成测试。首轮 3 个失败来自测试夹具变量遮蔽及 db.asset 返回值使用错误，修正后只剩 CSP 阻止 Playwright 字符串 eval；改用 expect 等待图片天然宽度，保持生产 CSP。完整回归 **60 passed in 69.22s**，JUnit 0 failures/errors/skipped，含 9 项真实 WSL 测试，证据 data/validation/report-formats-full.xml。ruff 与 pip check 全绿。
+- 初次 build --no-isolation 因原构建 venv 缺少 wheel/setuptools 版本过低失败；改用标准隔离 python -m build 成功生成 sdist/wheel，未升级项目运行环境。asm/report_html.py 已纳入包；构建输出在 data/validation/report-formats-dist/。
+- 对既有 test 数据库执行 report（未重新扫描），生成实际 xlsx/CSV/HTML：总表 4、equity 1、domains 1、ips 1、urls 14、systems 1、social 0、todos 14，1 张 1280×720 首页截图。八份 CSV 与 xlsx 逐项一致；独立 HTML 移动后离线加载，搜索通过、零外部 HTTP 请求、零页面错误；禁用 JS 验证在集成测试内通过。首页和截图区实际渲染已检查，证据 data/validation/report-formats-preview/。
+- docs/reference/ 共 26 文件：18 个工具、6 个搜索引擎、索引与 API 公共调用；每页记录版本/已接入状态、场景命令、输出、利用/去重/核对及排错。原生 help 保存 data/validation/reference-help/（masscan 固定版本 help 的 rc=1 为已知特殊响应）；全部 reference 链接有效。命令示例未进行公网资产扫描，手动结果没有自动导入能力。
+- 本批未调用带凭据搜索接口，未修改 WSL 工具安装、系统 DNS/代理/防火墙；公共 53 返回 fake-IP 与 Censys Legacy v2 迁移等原有缺口保持明确。报告数据、验证产物、.env 和本地 push receipt 继续不提交。后续仍先建立可信 DNS 路径，再接入 WSL Web 工具。
+- 已同步 README、HANDOFF、ACCEPTANCE、RUNBOOK、OPERATIONS、COVERAGE、目录/工具/测试说明；推送与新四环境 CI 的实际结果随后追加。

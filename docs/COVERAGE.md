@@ -13,7 +13,7 @@
 | DNS/CDN | WSL dnsx/dig 三上游 A/AAAA/MX/NS/CNAME、Windows 显式复核、各来源及差异证据、优先上游修正、0.0.0.0/::/fake-IP 隔离、链终点/环路/上限/悬空、CDN 分流、可选原始域名 HTTP 接管指纹 review；端口/域名报告使用修正地址 | 优先修复两端显式公共 UDP/TCP 53 仍被 fake-IP 影响的解析路径；DoH 适配器/可信转发器、自有域名现场证据、真实接管 HTTP 指纹、NS/MX 可注册性核验、历史 IP/归源路径 |
 | ports | root nmap TCP/UDP、masscan 选项、结果入库、蜜罐、/24 聚类 | 主链 Top1000→全端口二段、Quake/FOFA IP enrich、TLS SAN 回流、宝塔/favicon/完整差分指纹 |
 | web | scope 每跳、bounded response、全部内置路由+泄露、catch-all、robots/sitemap、Java 路径、CORS 候选、Playwright 截图 | WSL httpx/gowitness/ffuf/katana 接入、JS 端点、版本矩阵、CDN 现场差分、可选参数工具 |
-| report | 严格总表+7 sheet、可信 SQL、截图按总表行号、相对链接、防公式注入、八表逐页视觉核验 | HTML 结果报告尚未实现；更多资产业务标签与真实数据版式回归 |
+| report | 同一八表导出 xlsx/CSV/HTML；CSV UTF-8 BOM/文本转义，HTML 内嵌 PNG/离线查看/搜索/字段转义/CSP，截图缺失状态；默认报告在 p1/p2 后 | 更多资产业务标签、大体积内嵌图片的性能基线与真实数据版式回归 |
 | panel | 六引擎 fixture 解析、FOFA dot syntax/≥15s/≤200、持久账本、分页、Quake 子域切分 | 真实各家账户校验、Censys 旧 API 迁移评估、跨 profile 的共享额度、IP段细分 |
 | OSINT | 特定词拒绝泛词、SSE 流、公告四合一、导入反哺 | 更多来源、人员图谱、实际服务限流与 API 可用性 |
 | supply | cert A 路、B 路人工证据卡、六维清单、证书8次额度 | 高价值6 IP全端口专用限额、供应商案例实网、两路并发 |

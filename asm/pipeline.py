@@ -12,8 +12,8 @@ from .scope import Scope, ScopeError
 STAGES = {
     "1": "stages.s1_seed", "2a": "stages.s2a_equity", "2b": "stages.s2b_icp",
     "3": "stages.s3_scope", "4": "stages.s4_subdomain", "5": "stages.s5_dns_cdn",
-    "6": "stages.s6_port", "7": "stages.s7_web", "8": "stages.s8_report",
-    "p1": "parallel.p1_osint", "p2": "parallel.p2_supply",
+    "6": "stages.s6_port", "7": "stages.s7_web",
+    "p1": "parallel.p1_osint", "p2": "parallel.p2_supply", "8": "stages.s8_report",
 }
 
 

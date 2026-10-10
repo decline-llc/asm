@@ -2,6 +2,8 @@
 
 仓库只保存安装锁、包装器与说明，不保存下载二进制和第三方源码。实际运行目录为 WSL 原生 `~/asm-ws/`。
 
+每个工具的固定版本、接入状态、不同场景命令、原生输出、利用/去重/核对及排错见 [docs/reference](../docs/reference/README.md)。手动工具输出不会自动进入当前 SQLite/报告，使用说明与自动调度能力分别记录。
+
 | 类别 | 工具 | WSL 位置 |
 |---|---|---|
 | 被动收集 | subfinder、OneForAll | bin/、tools/OneForAll/.venv/ |
