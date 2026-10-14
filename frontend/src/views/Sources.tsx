@@ -8,10 +8,11 @@ import { Breadcrumb } from "../components/Breadcrumb";
 const CAP_LABEL: Record<SourceCapability, { label: string; tone: "ok" | "info" | "warn" | "neutral" | "danger" }> = {
   installed: { label: "工具已安装", tone: "info" },
   adapter: { label: "适配器存在", tone: "info" },
-  integrated: { label: "主流程已接入", tone: "ok" },
+  integrated: { label: "已接入流水线", tone: "ok" },
   "offline-verified": { label: "离线已验证", tone: "ok" },
   "online-verified": { label: "实网已验证", tone: "ok" },
   "no-credential": { label: "未配置凭据", tone: "warn" },
+  "runtime-dependency": { label: "运行时依赖", tone: "neutral" },
 };
 
 export function Sources() {
@@ -23,7 +24,7 @@ export function Sources() {
     <div className="panel" key={s.id} style={{ padding: "14px 16px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <h3 style={{ margin: 0, fontSize: 14 }}>{s.name}</h3>
-        {s.inMainFlow && <Badge tone="ok">主流程</Badge>}
+        {s.inMainFlow && <Badge tone="ok" title="当前主流程默认自动调度（默认引擎 / 默认来源）">默认调度</Badge>}
       </div>
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", margin: "8px 0" }}>
         {s.capabilities.map((c) => (
@@ -58,22 +59,30 @@ export function Sources() {
 
       <div className="notice warn">
         <Icon name="warn" size={14} />
-        当前主流程自动查询以 FOFA / Quake 为主，另四家已有适配器但未全部接入主调度；
-        DNS 可信解析路径存在已知待解决问题（见资产详情 DNS 页签的异常观测证据）。
+        六家引擎中仅 FOFA / Quake 进入主流程自动查询（FOFA 已配置凭据并完成一次受控被动试点），
+        其余四家只有适配器；WSL 采集工具均已接入，但除默认引擎外都需在计划中显式选中，且 HTTP 工具
+        全程经隔离 broker 逐请求过范围与预算。DNS 已实施可选 DoH 可信解析路径（默认开启会改变解析
+        来源与恢复指纹，仓库内 profile 一律不默认开启），本机系统解析仍被劫持，异常观测见资产详情
+        DNS 页签。
       </div>
 
       <h3 style={{ margin: "14px 0 10px", fontSize: 14 }}>网络空间搜索引擎</h3>
       <div className="grid cols-3">{engines.map(renderCard)}</div>
 
-      <h3 style={{ margin: "18px 0 10px", fontSize: 14 }}>采集工具（WSL 执行层）</h3>
+      <h3 style={{ margin: "18px 0 10px", fontSize: 14 }}>采集工具（WSL 执行层 / 隔离 broker / 运行时依赖）</h3>
       <div className="grid cols-3">{tools.map(renderCard)}</div>
 
       <div className="panel" style={{ marginTop: 14, padding: "14px 16px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: 13 }}>凭据配置（掩码演示）</h3>
         <dl className="fields" style={{ fontSize: 12.3 }}>
-          <dt>FOFA_KEY</dt><dd className="mono">demo_••••••••3f9a（仅掩码演示值）</dd>
-          <dt>QUAKE_KEY</dt><dd className="mono">demo_••••••••7b21（仅掩码演示值）</dd>
+          <dt>FOFA_KEY</dt><dd className="mono">demo_••••••••3f9a（掩码 UI 演示值，非真实凭据）</dd>
+          <dt>QUAKE_KEY</dt><dd className="mono">demo_••••••••7b21（掩码 UI 演示值，非真实凭据）</dd>
           <dt>HUNTER_KEY</dt><dd className="mono">未配置</dd>
+          <dt>真实配置状态</dt>
+          <dd>
+            FOFA 已配置（后端 .env，凭据不回显前端）；Quake / Hunter / ZoomEye / Shodan / Censys 未配置。
+            上面的掩码行只演示交互，不代表真实密钥存在。
+          </dd>
           <dt>说明</dt>
           <dd>不收集真实密钥、不在浏览器保存真实密钥；后端通过 .env 注入，前端待接入配置接口。</dd>
         </dl>

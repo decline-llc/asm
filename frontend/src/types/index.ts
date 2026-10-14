@@ -202,16 +202,18 @@ export interface InvestigationTask {
 export type SourceCapability =
   | "installed" // 工具已安装
   | "adapter" // 适配器存在
-  | "integrated" // 主流程已接入
-  | "offline-verified" // 离线已验证
+  | "integrated" // 已完成代码接入（含需在计划中显式选中的可选引擎）
+  | "offline-verified" // 离线/回环已验证
   | "online-verified" // 实网已验证
-  | "no-credential"; // 未配置凭据
+  | "no-credential" // 未配置凭据
+  | "runtime-dependency"; // 仅被其它工具调用，不独立调度
 
 export interface SourceInfo {
   id: string;
   name: string;
   category: "search-engine" | "tool";
   capabilities: SourceCapability[];
+  /** 仅为 true 时表示当前主流程会默认自动调度（默认引擎/默认来源）；可选引擎已接入但为 false */
   inMainFlow: boolean;
   demoCalls: number | null; // null = 未运行
   quota: string; // 未知显示「未提供」

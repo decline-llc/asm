@@ -1,7 +1,7 @@
 # 工具版本与集成状态矩阵
 
 > 目的：把「本机装了什么版本」与「是否真的接入了流水线」收敛到一处可核对的地方。此前版本只记录在被 Git 忽略的 `data/validation/` 证据里，随环境变动会丢失；权威二进制版本仍以 [tool-lock.json](../../tools/tool-lock.json) 为唯一来源，本表与它的一致性由 `tests/unit/test_tool_reference_docs.py` 强制。
-> 版本核对：2026-10-12（原 WSL 环境，`data/validation/original-wsl-tools-20261012.txt`）；集成状态核对：Session 009（2026-10-14，以代码为准）。
+> 版本核对：2026-10-12（原 WSL 环境，`data/validation/original-wsl-tools-20261012.txt`），2026-10-14 复核**未变**（`data/validation/tool-runtime-recheck-20261014.txt`，含 a_scan.py sha256、OneForAll/SecLists commit 与 tool-lock.json 哈希）；集成状态核对：Session 009（2026-10-14，以代码为准），Session 011（2026-10-14）用当前代码对 11 个已接入工具做了回环实跑复核（`data/validation/native-tools-live-20261015-001848/`、`data/validation/external-tools-live-20261015-001859/`）。
 > 集成状态取值固定为下表几种，便于机器校验：`Stage 4`、`Stage 5`、`Stage 6`、`Stage 7/broker`、`人工`、`运行时依赖`、`未接入`。
 
 | 工具 | 版本 | 集成状态 | 接入位置 | 证据 |

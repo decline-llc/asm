@@ -271,23 +271,61 @@ def main():
         page.locator(".sidebar .nav-item", has_text="数据来源").click()
         page.wait_for_timeout(300)
         src_txt = page.locator("main").inner_text()
-        check("R2.FOFA无实网已验证徽章", "实网已验证" not in src_txt)
-        # 「WSL 完整接入」只允许出现在 ffuf 卡的「仍待实现」语境
-        import re as _re
-        wsl_full = [seg for seg in _re.findall(r".{0,6}WSL 完整接入.{0,8}", src_txt) if "待实现" not in seg]
-        check("R2.httpx无WSL完整接入(仅ffuf待实现语境)", len(wsl_full) == 0, f"(残留 {wsl_full})")
-        check("R2.naabu标未接入", "未接入阶段自动调度" in src_txt or "未接入主流程" in src_txt or "端口扫描由 nmap 承担" in src_txt)
-        check("R2.gowitness标未接入", "截图由 Windows Playwright 承担" in src_txt)
-        # 三个未接入 WSL 工具卡不应出现「主流程」徽章；用精确文本统计卡片标题旁的「主流程」徽章
-        # （FOFA/Quake/OneForAll/dnsx/nmap/httpxWin/Playwright = 7 个 inMainFlow 卡）
-        badge_texts = page.locator("main .panel .badge").all_inner_texts()
-        exact_mainflow = [t for t in badge_texts if t.strip() == "主流程"]
-        integrated = [t for t in badge_texts if t.strip() == "主流程已接入"]
-        note(f"  徽章统计: 主流程={len(exact_mainflow)}, 主流程已接入={len(integrated)}, 全部={sorted(set(badge_texts))}")
-        check("R2.主流程徽章=7(真实接入项)", len(exact_mainflow) == 7, f"(实际 {len(exact_mainflow)})")
-        check("R2.主流程已接入徽章=7", len(integrated) == 7, f"(实际 {len(integrated)})")
-        # 无「实网已验证」徽章
-        check("R2.无实网已验证徽章", "实网已验证" not in badge_texts)
+        cards = page.locator("main .grid.cols-3 .panel")
+        titles = [t.strip() for t in cards.locator("h3").all_inner_texts()]
+        texts = cards.all_inner_texts()
+        by_title = dict(zip(titles, texts))
+        note(f"  卡片标题({len(titles)}): {titles}")
+        # 卡片集合须与 dataset 的「6 家引擎 + 16 个采集工具/运行时依赖」一致
+        expected_titles = {
+            "FOFA", "Quake", "Hunter", "ZoomEye", "Shodan", "Censys",
+            "subfinder（被动子域）", "OneForAll（子域）", "dnsx / dig（DNS）",
+            "nmap（端口扫描）", "naabu（端口发现）", "a_scan（端口发现）",
+            "httpx（Windows · Web 探测）", "httpx（WSL · 隔离 broker）",
+            "katana（爬取 · JS 端点）", "ffuf（路径枚举）",
+            "Playwright（Windows · 截图）", "gowitness（截图 · 隔离 broker）",
+            "nuclei（模板核查）", "wafw00f（WAF 指纹）",
+            "Chrome（gowitness 运行时依赖）", "SecLists（字典输入）",
+        }
+        check("R2.来源卡=22 且标题集合一致", len(titles) == 22 and set(titles) == expected_titles,
+              f"(实际 {len(titles)}，缺 {sorted(expected_titles - set(titles))}，多 {sorted(set(titles) - expected_titles)})")
+        # 旧的「未接入主流程」类表述必须已清零（Session 010 工具版本矩阵：这些工具均已接入）
+        stale = [m for m in ("未接入主流程", "已安装，未接入", "WSL 完整接入", "端口扫描由 nmap 承担",
+                             "尚待每浏览器请求的范围控制", "WSL 完整接入仍待实现") if m in src_txt]
+        check("R2.无过期「未接入」表述", not stale, f"(残留 {stale})")
+        # 徽章语义：integrated=已接入流水线（含可选引擎），inMainFlow 单独以「默认调度」呈现
+        badge_texts = page.locator("main .grid.cols-3 .panel .badge").all_inner_texts()
+        badges = [t.strip() for t in badge_texts]
+        default_run = [t for t in badges if t == "默认调度"]
+        integrated = [t for t in badges if t == "已接入流水线"]
+        runtime_dep = [t for t in badges if t == "运行时依赖"]
+        no_cred = [t for t in badges if t == "未配置凭据"]
+        note(f"  徽章统计: 默认调度={len(default_run)}, 已接入流水线={len(integrated)}, "
+             f"运行时依赖={len(runtime_dep)}, 未配置凭据={len(no_cred)}, 全部={sorted(set(badges))}")
+        # 默认调度 = FOFA/Quake/subfinder/OneForAll/dnsx/nmap/httpx(Windows)/Playwright
+        check("R2.默认调度徽章=8", len(default_run) == 8, f"(实际 {len(default_run)})")
+        # 已接入流水线 = 六家中 FOFA/Quake + 14 个已接入工具（含可选引擎）
+        check("R2.已接入流水线徽章=16", len(integrated) == 16, f"(实际 {len(integrated)})")
+        check("R2.运行时依赖徽章=2(Chrome/SecLists)", len(runtime_dep) == 2, f"(实际 {len(runtime_dep)})")
+        # 仅 FOFA 已配置凭据：其余五家标「未配置凭据」
+        check("R2.未配置凭据徽章=5", len(no_cred) == 5, f"(实际 {len(no_cred)})")
+        check("R2.FOFA卡不再标未配置凭据", "未配置凭据" not in by_title["FOFA"] and "受控被动试点" in by_title["FOFA"])
+        # 无「实网已验证」徽章：真实账户泛化验收仍未执行
+        check("R2.无实网已验证徽章", "实网已验证" not in badges)
+        # 可选引擎确实以「已接入」而非「未接入」呈现，且写明谁承担该阶段
+        for card, needle in (
+            ("naabu（端口发现）", "nmap 确认服务"),
+            ("httpx（WSL · 隔离 broker）", "隔离 broker"),
+            ("katana（爬取 · JS 端点）", "-jc 默认开启"),
+            ("ffuf（路径枚举）", "随机基线"),
+            ("gowitness（截图 · 隔离 broker）", "由默认引擎 Playwright 承担"),
+            ("nuclei（模板核查）", "待复核线索"),
+            ("wafw00f（WAF 指纹）", "waf_fingerprint"),
+        ):
+            body = by_title[card]
+            check(f"R2.{card}已接入且写明边界", "已接入流水线" in body and needle in body)
+        # dnsx 卡不再声称可信解析路径待解决，改为已实施的可选 DoH
+        check("R2.dnsx卡写明已实施 DoH", "DoH" in by_title["dnsx / dig（DNS）"] and "仍被劫持" in by_title["dnsx / dig（DNS）"])
         shoot(page, "R2-sources")
 
         # ============ R6：任务状态三处一致 ============

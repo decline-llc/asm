@@ -700,7 +700,7 @@ export const leads: Lead[] = [
     evidenceSource: "Stage DNS · 上游观测日志",
     ts: `${T}10:21:11Z`,
     reason: "上游返回假地址（fake-IP），属异常观测",
-    suggestion: "核对可信解析路径；确认 203.0.113.77 为真实服务地址",
+    suggestion: "以加密上游（DoH）复核解析路径；确认 203.0.113.77 为真实服务地址",
     severity: "high", confidence: "C", relatedDomain: "lab.example.com",
     relatedAssetKey: "lab.example.com|443|tcp",
   },
@@ -819,9 +819,11 @@ export const leads: Lead[] = [
 
 // ---------------- 任务（8–12 个） ----------------
 
-// 工具名与后端实际引擎一致（docs/OPERATIONS.md）：
-// 子域=OneForAll、DNS=dnsx/dig、端口=nmap、Web 探测=httpx(Windows)、截图=Playwright(Windows)。
-// 演示任务中涉及的 naabu / WSL httpx / gowitness 均未接入主流程，不作为执行工具展示。
+// 子任务工具名按演示运行的默认引擎展示（docs/OPERATIONS.md 与 profiles/modes.yaml）：
+// 子域=OneForAll、DNS=dnsx/dig、端口=nmap（Stage 6 默认引擎）、Web 探测=httpx(Windows)、
+// 截图=Playwright(Windows)（后两者为 Stage 7 默认引擎）。
+// naabu/a_scan、WSL httpx、katana、ffuf、gowitness、nuclei、wafw00f 已作为可选引擎接入，
+// 但需在计划中显式选中，本轮演示未调用，故不作为执行工具展示（来源页以「已接入」徽章体现）。
 
 const mkStages = (upto: number, failedAt = -1): StageStep[] => {
   const names: [string, string][] = [
@@ -932,28 +934,52 @@ export const snapshots: Snapshot[] = [
 ];
 
 // ---------------- 数据来源 ----------------
-// 能力状态与 docs/OPERATIONS.md、HANDOFF.md 对齐：
-// - 六家引擎凭据全空（.env 未配置），从未做真实账户实网校验 → 无 online-verified
-// - naabu / WSL httpx / gowitness 已安装但未接入阶段自动调度；
-//   当前主流程：端口扫描 = nmap（Stage 6），Web 探测 = Windows Python httpx（Stage 7），
-//   截图 = Windows Playwright（Stage 7）
+// 能力状态按后端事实对齐，权威来源：
+// - 版本与集成状态矩阵：docs/reference/tool-versions.md（Session 010，与 tools/tool-lock.json 由测试强制一致）
+// - 调度与默认引擎：docs/OPERATIONS.md 工具表、profiles/modes.yaml
+// - 隔离 broker 范围契约：docs/TOOL_INTEGRATION.md（Session 009，tests/unit/test_broker_scope.py 固定）
+//
+// 徽章语义（7 级，不互相替代）：
+//   installed 已安装 / adapter 适配器存在 / integrated 已完成代码接入（含需显式选中的可选引擎）/
+//   offline-verified 离线或回环已验证 / online-verified 实网已验证 / no-credential 未配置凭据 /
+//   runtime-dependency 仅被其它工具调用，不独立调度
+// inMainFlow 只表示「当前主流程会默认自动调度」（默认引擎/默认来源）。可选引擎已 integrated
+// 但需在计划中显式选中，故 inMainFlow=false —— 接入徽章与主流程徽章各说一件事，不再混用。
+//   默认引擎：Stage 4 = subfinder + OneForAll；Stage 5 = dnsx/dig；Stage 6 = nmap；
+//   Stage 7 = Web 探测 httpx(Windows)、截图 Playwright、爬取 native_crawler、
+//   路径 stage_7_paths、风险核查 native_risk_checks。
+//   可选引擎（Stage 6/7）：naabu、a_scan、httpx(WSL)、katana、ffuf、gowitness、nuclei、wafw00f。
+// 凭据事实：本机 .env 仅 FOFA_EMAIL/FOFA_KEY 已配置，且已完成一次受控被动试点
+//   （2026-10-10，11 次请求 / 0 F 点 / 限速 ≥20s，证据 report/tk.cn_delivery/）；其余五家为空。
+//   真实账户的泛化验收仍未执行，故任何来源都不标 online-verified。
+// DNS 事实：Session 008 已实施 DoH 可信解析路径（RFC 8484，可选、仓库内 profile 一律不默认开启），
+//   假地址（198.18.0.0/15）与回环答案会被拒绝；本机系统解析仍被劫持。
+// 演示计数：本轮演示按默认引擎执行；未调用的可选引擎 demoCalls=null，页面显示「未运行」
+//   （与「失败」「无错误」分开呈现，不伪装成已执行）。
 
 export const sources: SourceInfo[] = [
-  { id: "fofa", name: "FOFA", category: "search-engine", capabilities: ["installed", "adapter", "integrated", "offline-verified", "no-credential"], inMainFlow: true, demoCalls: 6, quota: "未提供", lastError: null, resultCount: 14, note: "主流程自动查询来源之一；演示数据为适配器回放，凭据未配置，实网验证待执行" },
+  { id: "fofa", name: "FOFA", category: "search-engine", capabilities: ["installed", "adapter", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 6, quota: "未提供", lastError: null, resultCount: 14, note: "主流程自动查询来源之一；凭据已配置并完成一次受控被动试点（2026-10-10，11 次请求 / 0 F 点 / 限速 ≥20s）；本卡计数为演示回放，真实账户泛化验收待执行，故不标「实网已验证」" },
   { id: "quake", name: "Quake", category: "search-engine", capabilities: ["installed", "adapter", "integrated", "offline-verified", "no-credential"], inMainFlow: true, demoCalls: 4, quota: "未提供", lastError: null, resultCount: 9, note: "主流程自动查询来源之一；凭据未配置，实网验证待执行" },
   { id: "hunter", name: "Hunter", category: "search-engine", capabilities: ["adapter", "no-credential"], inMainFlow: false, demoCalls: 2, quota: "未配置凭据", lastError: null, resultCount: 4, note: "适配器存在，未接入主调度；演示调用为手工触发" },
   { id: "zoomeye", name: "ZoomEye", category: "search-engine", capabilities: ["adapter", "no-credential"], inMainFlow: false, demoCalls: null, quota: "未配置凭据", lastError: "API 超时（10-09 10:11，OneForAll 渠道）", resultCount: null, note: "未运行≠失败：本轮经 OneForAll 渠道尝试超时" },
   { id: "shodan", name: "Shodan", category: "search-engine", capabilities: ["adapter", "no-credential"], inMainFlow: false, demoCalls: 1, quota: "未配置凭据", lastError: null, resultCount: 1, note: "适配器存在，演示调用 1 次" },
-  { id: "censys", name: "Censys", category: "search-engine", capabilities: ["adapter", "no-credential"], inMainFlow: false, demoCalls: 1, quota: "未提供", lastError: null, resultCount: 1, note: "适配器存在，未接入主调度" },
+  { id: "censys", name: "Censys", category: "search-engine", capabilities: ["adapter", "no-credential"], inMainFlow: false, demoCalls: 1, quota: "未提供", lastError: null, resultCount: 1, note: "适配器存在（Legacy v2），未接入主调度；Platform v3/PAT 迁移待做" },
+  { id: "subfinder", name: "subfinder（被动子域）", category: "tool", capabilities: ["installed", "integrated"], inMainFlow: true, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 4 自动调用（幂等缓存），与 OneForAll、公开来源并行；提供商凭据在 WSL ~/.config/subfinder/provider-config.yaml，与 Windows .env 不互通；本轮演示未单列其计数" },
   { id: "oneforall", name: "OneForAll（子域）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: null, resultCount: 34, note: "WSL 内运行，Stage 4 隔离被动调用，七来源白名单（默认五）" },
-  { id: "dnsx", name: "dnsx / dig（DNS）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: null, resultCount: 30, note: "Stage 5 自动调用，多上游复核；可信解析路径存在已知待解决问题" },
+  { id: "dnsx", name: "dnsx / dig（DNS）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: null, resultCount: 30, note: "Stage 5 自动调用，多上游复核；可信解析路径已实施（可选 RFC 8484 DoH 加密上游，假地址与回环答案拒绝），仓库内 profile 不默认开启 DoH，本机系统解析仍被劫持" },
   { id: "nmap", name: "nmap（端口扫描）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 1, quota: "—", lastError: null, resultCount: 22, note: "Stage 6 默认引擎（WSL），回环 TCP/UDP 已验收" },
-  { id: "httpx-win", name: "httpx（Windows · Web 探测）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: null, resultCount: 17, note: "Stage 7 当前由 Windows Python httpx 承担，非 WSL 版" },
-  { id: "playwright", name: "Playwright（Windows · 截图）", category: "tool", capabilities: ["installed", "integrated"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: "3 个目标失败（403/超时/TLS）", resultCount: 13, note: "Stage 7 截图由 Windows Playwright 承担；部分失败可重试" },
-  { id: "naabu", name: "naabu（端口候选 · 未接入）", category: "tool", capabilities: ["installed"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "已安装，未接入阶段自动调度；端口扫描由 nmap 承担（见 docs/OPERATIONS.md）" },
-  { id: "httpx-wsl", name: "httpx（WSL · 未接入）", category: "tool", capabilities: ["installed"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "已安装，未接入 Stage 7；Web 探测由 Windows Python httpx 承担" },
-  { id: "gowitness", name: "gowitness（截图 · 未接入）", category: "tool", capabilities: ["installed"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "已安装，尚待每浏览器请求的范围控制；截图由 Windows Playwright 承担" },
-  { id: "ffuf", name: "ffuf / katana（待接入）", category: "tool", capabilities: ["installed"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "WSL 完整接入仍待实现，本轮未运行" },
+  { id: "naabu", name: "naabu（端口发现）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 6 端口发现可选引擎（经适配器）；候选端口逐条校验目标一致后由 nmap 确认服务；本轮演示 Stage 6 由默认引擎 nmap 执行" },
+  { id: "a_scan", name: "a_scan（端口发现）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 6 端口发现可选引擎（项目 stdlib TCP 工具，任务内副本 + 哈希校验）；只给 TCP connect 候选，不做服务版本识别；本轮演示未调用" },
+  { id: "httpx-win", name: "httpx（Windows · Web 探测）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: null, resultCount: 17, note: "Stage 7 默认 Web 探测（Windows Python httpx，非 WSL 版）" },
+  { id: "httpx-wsl", name: "httpx（WSL · 隔离 broker）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 web_visit 可选引擎（ProjectDiscovery httpx）；在仅 loopback 的私有 network namespace 内运行，每个 GET/HEAD 经 broker 交回范围/预算/回执，越界主机 403 且零传输；本轮演示由 Windows 侧探测承担" },
+  { id: "katana", name: "katana（爬取 · JS 端点）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 web_crawl 可选引擎（隔离 broker）；精确 crawl-scope + -dr/-duc，JS 端点提取 -jc 默认开启（tool_options.katana.js_crawl: false 可关），jsluice 显式拒绝；broker 未实际请求的 URL 降级为范围外线索；本轮演示未调用" },
+  { id: "ffuf", name: "ffuf（路径枚举）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 web_path_enum 可选引擎（隔离 broker，随机基线 + 二次 HTTP 复核，排除统一返回页）；本轮演示未调用" },
+  { id: "playwright", name: "Playwright（Windows · 截图）", category: "tool", capabilities: ["installed", "integrated"], inMainFlow: true, demoCalls: 2, quota: "—", lastError: "3 个目标失败（403/超时/TLS）", resultCount: 13, note: "Stage 7 默认截图引擎（Windows Playwright，每个浏览器请求经范围复核）；部分失败可重试" },
+  { id: "gowitness", name: "gowitness（截图 · 隔离 broker）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 screenshot 可选引擎（gorod 驱动 + 任务内 Chrome 代理，Chrome 只信任本任务代理证书的固定 SPKI）；无 PNG 或失败按 partial，不算完成；本轮演示截图由默认引擎 Playwright 承担" },
+  { id: "nuclei", name: "nuclei（模板核查）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 vulnerability_check 可选；仅执行仓库内已批准的 HTTP 观察模板，模板命中是待复核线索而非已确认漏洞；本轮演示未调用" },
+  { id: "wafw00f", name: "wafw00f（WAF 指纹）", category: "tool", capabilities: ["installed", "integrated", "offline-verified"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "Stage 7 vulnerability_check 可选，须显式选中 waf_fingerprint；指纹只作复核候选，不作归属或漏洞依据；独立 venv、未在 tool-lock 固定；本轮演示未调用" },
+  { id: "chrome", name: "Chrome（gowitness 运行时依赖）", category: "tool", capabilities: ["installed", "runtime-dependency"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "仅由 gowitness 以固定 SPKI 代理启动，不独立调度；本轮演示未使用 gowitness，故未启动" },
+  { id: "seclists", name: "SecLists（字典输入）", category: "tool", capabilities: ["installed", "runtime-dependency"], inMainFlow: false, demoCalls: null, quota: "—", lastError: null, resultCount: null, note: "固定 commit 稀疏检出的 7 个字典文件，作为 DNS/内置路径/ffuf 的冻结输入（非采集结果）；Stage 4 当前使用内置 DNS_PREFIXES，不自动读全部 SecLists" },
 ];
 
 // ---------------- 统计口径（镜像后端 asm/precision.py destination()） ----------------

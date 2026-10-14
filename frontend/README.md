@@ -58,10 +58,15 @@ src/
 - 快照对照、复核备注、操作历史、模拟任务为**演示扩展能力**，仅持久化在 localStorage；
   「重置演示」按钮可一键还原；损坏/旧版本地数据会被逐字段校验归一，异常时由顶层
   ErrorBoundary 提供一键重置，不会白屏。
-- 来源页能力分级与 `docs/OPERATIONS.md` 对齐：六家引擎中 **FOFA 已配置凭据并完成一次受控被动试点**
+- 来源页能力分级与 `docs/reference/tool-versions.md`（Session 010 版本/集成状态矩阵）及
+  `docs/OPERATIONS.md` 工具表对齐：徽章分 7 级——工具已安装 / 适配器存在 / 已接入流水线 /
+  离线已验证 / 实网已验证 / 未配置凭据 / 运行时依赖，另有独立的「默认调度」徽章表示当前主流程会
+  默认自动调度（两个维度各说一件事，不再混用）。六家引擎中**仅 FOFA 已配置凭据并完成一次受控被动试点**
   （2026-10-10，11 次请求 / 0 F 点 / 限速 ≥20s，见「被动试点」视图与 `report/tk.cn_delivery/`），其余五家未配置；
-  naabu / WSL httpx / gowitness 已安装但**未接入主流程**——当前端口扫描为 nmap（Stage 6）、
-  Web 探测为 Windows Python httpx、截图为 Windows Playwright（Stage 7）。
+  naabu、a_scan、WSL httpx、katana、ffuf、gowitness、nuclei、wafw00f 均已接入为**可选引擎**
+  （需在计划中显式选中，HTTP 工具全程经隔离 broker 逐请求过范围与预算），Chrome 与 SecLists 为运行时依赖。
+  Stage 6/7 默认引擎仍是 nmap、Windows Python httpx、Playwright、native_crawler、stage_7_paths、native_risk_checks。
+  真实账户的泛化验收未执行，故来源页没有任何「实网已验证」徽章。
 - 前端**不执行真实扫描、不调用第三方 API、不执行 shell**，浏览器未连接 WSL。
   例外：**被动试点视图**展示的是「已由后端脚本收集并固化为静态数据」的真实被动证据
   （`data/tkcnEvidence.local.ts` 由交付目录自带的工具
@@ -126,6 +131,38 @@ src/
 在 PowerShell 7 中构建后运行 `node scripts/frontend_data_regression.cjs` 与
 `.\.venv\Scripts\python.exe scripts/frontend_n1_n8_verify.py`。脚本仅访问本地静态构建；结果写入
 `data/qa/frontend-n1-n8/`。当前轮结果以脚本新产物为准，上述历史 53/53 不计为本轮验收。
+
+## 来源页能力徽章对齐（2026-10-14，承接 Session 010 工具版本矩阵）
+
+`src/data/dataset.ts` 的来源卡此前按旧文档把 naabu / WSL httpx / gowitness 标为「未接入主流程」，
+与 Session 010 的工具版本矩阵（`docs/reference/tool-versions.md`）相反。本批只改前端，未改后端行为：
+
+- 徽章语义收敛为 7 级并新增 `runtime-dependency`（运行时依赖）；`integrated` 改称「已接入流水线」，
+  表示已完成代码接入（含需在计划中显式选中的可选引擎）；`inMainFlow` 不再与接入度混用，
+  单独渲染为「默认调度」徽章（含 title 说明），使「已接入」与「默认自动跑」各说一件事。
+- 可选引擎 naabu、a_scan、WSL httpx、katana、ffuf、gowitness、nuclei、wafw00f 由「未接入」改为可核对的
+  已接入说明：隔离 broker 逐请求过范围/预算/回执、越界 403 零传输、katana 精确 crawl-scope 与 `-jc` 默认开启、
+  `waf_fingerprint` 须显式选中、nuclei 仅批准模板且命中为待复核线索等。
+- 补齐缺失卡片：subfinder（Stage 4 自动调用）、a_scan、katana、nuclei、wafw00f、Chrome、SecLists；
+  原「ffuf / katana（待接入）」拆成两张卡。来源页现为 22 张卡（6 家引擎 + 16 个采集工具/运行时依赖）。
+- FOFA 去掉「未配置凭据」（本机 `.env` 已配置 FOFA_EMAIL/FOFA_KEY，且已完成一次受控被动试点），
+  其余五家保持「未配置凭据」；**仍不标「实网已验证」**。凭据面板增加「真实配置状态」行，掩码行明确标注
+  只是 UI 演示值。dnsx 卡的「可信解析路径存在已知待解决问题」改为 Session 008 已实施的可选 DoH 路径
+  （假地址/回环答案拒绝、仓库内 profile 不默认开启、本机系统解析仍被劫持）。
+- 可选引擎在演示运行中未被调用，卡片以 `demoCalls = null` 显示「未运行」，不伪装成已执行；
+  演示子任务的工具名仍严格是默认引擎（nmap / httpx(Windows) / Playwright）。
+
+验证：`npx tsc -b` 与 `npm run build` 通过（仅既有 chunk 体积告警）；`scripts/fix_frontend_verify.py`
+重跑 **62/62**，新增 R2 断言——22 张卡标题集合一致、默认调度=8、已接入流水线=16、运行时依赖=2、
+未配置凭据=5、无「实网已验证」、无过期「未接入」表述，且每张可选引擎卡必须写明边界；
+`node scripts/frontend_data_regression.cjs` 11/11。证据：`data/qa/frontend-n1-n8/` 下本批产物
+（`sources-badges-20261014/` 截图与 `verify-results.json`、`data-results.json`）。
+
+徽章里写的能力还有**当前代码的真实回环回执**支撑：`scripts/native_tool_acceptance.py` native **5/5**、
+`scripts/external_tool_acceptance.py --screenshot-driver gorod` external **6/6** completed（katana 实参含
+`-jc` 与精确 crawl-scope、账本记 `isolated_http_broker`，gowitness 经 gorod + 任务内 chrome-wrapper 产出真实
+PNG，wafw00f/nuclei 命中保持候选），证据 `data/validation/native-tools-live-20261015-001848/`、
+`data/validation/external-tools-live-20261015-001859/`、`data/validation/tool-runtime-recheck-20261014.txt`。
 
 ## 未来需要的后端接口（建议契约，当前不存在）
 
