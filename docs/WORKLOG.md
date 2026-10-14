@@ -19,6 +19,9 @@
 - 四环境 CI [38563972959](https://github.com/decline-llc/asm/actions/runs/38563972959)：只有 `ubuntu-latest` + Python 3.12 的 pytest 步骤失败，同一任务的 ruff 通过；3.11 同构任务通过，Windows 两项因 fail-fast 取消。GitHub 的 job/run 日志下载对匿名访问返回 403（需仓库写权限），因此先补充**匿名可读的失败注解**再复跑定位：新增 `scripts/ci_report_failures.py`（把 JUnit 失败用例名与首行原因输出为 `::error::` 工作流命令，本地运行加 `[local]` 前缀，始终返回 0）与 CI 中 `if: failure()` 的注解步骤。
 - 本机复核未复现同一原因：Windows Python 3.11 下 320 项单元与 324 项 CI 同构套件全部通过；WSL Ubuntu 3.12.3 复跑（同一 CI 选择器）只出现 2 项浏览器用例失败，原因是该 WSL 未安装 Playwright 浏览器（截图无产物、无请求），属复现环境差异，不作为 CI 同因证据。已终止 WSL 的 Chromium 下载。
 - 本轮未重跑外部工具与真实提供商，原有回环证据保持有效；CI 复跑结论随后追加。
+- 复跑 [38568884230](https://github.com/decline-llc/asm/actions/runs/38568884230) 又失败，但这次**注解直接给出证据**：失败任务是 `windows-latest` + Python 3.12，10 项失败中 9 项是 `tests/unit/test_dns_workers.py` 的 `PermissionError: [WinError 10013]`（套接字绑定被系统保留端口范围拒绝），另 1 项是并发用例的 `assert 1 == 2`（负载下的时序抖动）。两个 ubuntu 任务全部通过，Windows 3.11 被 fail-fast 取消，因此**首次 run 38563972959 的 ubuntu 3.12 失败至今未复现**，只能据实记为未复现（本机 320/324 全绿、同一提交第二次运行的 ubuntu 3.12 全绿）。
+- 根因定位：本机历史报告 `dns-workers-fixed.xml` 含同类 10013，新脚本把它定位到 `tests/fixtures/dns_server.py` 的夹具绑定行；且 `test_missing_permission_sends_no_dns_packet` 除创建夹具外不做任何套接字操作，可排除客户端侧。原夹具只对 TCP 绑定重试 16 次、UDP 绑定异常直接抛出，且每次都依赖端口 0 的连续分配，在保留端口密集的 Windows 上会连续落入同一批被拒端口。
+- 修复：`tests/fixtures/dns_server.py` 改为对 UDP/TCP 绑定一起重试，候选端口先取 0 再随机展开（20000–59999，48 次），并把可重试错误码同时按 `errno` 与 `winerror` 判定；`tests/unit/test_dns_workers.py` 并发用例的服务端延时 0.2s→0.5s（断言不变）以稳定重叠窗口。本机 43 项 DNS 相关用例通过（唯一失败仍是沙箱命名管道限制下的 openssl 证书夹具，放宽权限后通过）。
 
 ## 2026-10-11 · 项目分类与历史证据页面整理
 

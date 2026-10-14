@@ -82,7 +82,9 @@ def start(wb, settings):
 
 @pytest.mark.parametrize("capability", ["dns_recursive", "dns_enum"])
 def test_configured_workers_make_real_concurrent_local_queries(root, monkeypatch, capability):
-    metrics = Metrics(0.2)
+    # 0.5s per query: loaded CI runners can otherwise schedule the second worker after the first
+    # query finished, which would make the overlap assertion below depend on machine speed.
+    metrics = Metrics(0.5)
     metrics.install(monkeypatch)
     fixture = dns_server.DNSFixture({"fixture.invalid": {"A": ["127.0.0.1"], "AAAA": ["::1"]},
                                      "api.fixture.invalid": {"A": ["127.0.0.1"]}, "mail.fixture.invalid": {"A": ["127.0.0.2"]}})
@@ -93,7 +95,7 @@ def test_configured_workers_make_real_concurrent_local_queries(root, monkeypatch
         assert metrics.maximum == 1
         serial_count = len(metrics.requests)
         serial_starts = [item["at"] for item in metrics.requests]
-        assert min(b - a for a, b in zip(serial_starts, serial_starts[1:])) >= 0.18
+        assert min(b - a for a, b in zip(serial_starts, serial_starts[1:])) >= 0.45
         metrics.maximum = 0
         parallel = start(wb, config(fixture, capability, workers=2))
         assert parallel["status"] == "completed"
