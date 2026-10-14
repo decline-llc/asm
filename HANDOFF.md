@@ -1,6 +1,6 @@
 # AI 接力入口
 
-最新批次（2026-10-12）已有工具流程接入与原 WSL 核对：见 `docs/TOOL_INTEGRATION.md`、`docs/WORKBENCH_CAPABILITIES.md`、`tools/README.md`。原 `Ubuntu`/WSL2 回环实跑通过；Amass/gau/waybackurls/LinkFinder/arjun/x8 为下一批。真实目标、报告与凭据不入库。
+最新批次（Session 010，2026-10-14）katana JS 端点面与工具版本矩阵，并按代码校正过期接入状态文档：见 `docs/WORKLOG.md` 的 Session 008/009/010、`docs/reference/tool-versions.md`（版本与集成状态矩阵，与 `tools/tool-lock.json` 由测试强制一致）、`docs/TOOL_INTEGRATION.md`。此前 Session 009 已把 WSL Web 工具的范围契约用离线/回环测试固定，Session 008 已建立 DoH 可信解析路径。Amass/gau/waybackurls/LinkFinder/arjun/x8 仍未安装。真实目标、报告与凭据不入库。
 
 页面与目录整理（2026-10-11）：见 `docs/PROJECT_ORGANIZATION.md`。18 份本机配置已按业务/测试分目录；15 个旧验收项目移出默认业务列表，记录、运行和原始证据保持。后续验收用 `Workbench(..., validation=True)` 写独立数据库。`?pilot=1` 已改为独立真实历史调查档案，项目中心支持卡片/列表/表格。验收结果在 `data/qa/project-organization/summary.json`，迁移备份与清单在 `data/organization/20261011_120716_724684/`。下列 Session 记录为此前工程背景。
 
@@ -12,9 +12,9 @@
 
 工具在 `/home/longchuanli/asm-ws`，固定版本在 `tools/tool-lock.json`；项目只通过 stdin/tar 管道交换数据。当前 WSL 环境需为异步工具保留 Windows Popen 客户端，否则孤儿 Linux 任务可能被回收。
 
-远端用户指定 `https://github.com/decline-llc/asm.git`，main；代码已与远端同步，实际提交与 CI 证据看 WORKLOG，本地最终回执为 docs/PUSH_RECEIPT.local.json。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
+远端用户指定 `https://github.com/decline-llc/asm.git`，main；当前代码已与远端同步：`c92dce3`（DoH 可信解析路径）→ `46695e0`（broker 范围契约）→ `7272c48`（JS 端点面 + 版本矩阵 + 文档校正）已推送，本地与远端 `refs/heads/main` 均为 `7272c48`，四环境 CI [38589418826](https://github.com/decline-llc/asm/actions/runs/38589418826) 4/4 success（Ubuntu/Windows × Python 3.11/3.12）。实际提交与 CI 证据看 WORKLOG/ACCEPTANCE，本地最终回执为 docs/PUSH_RECEIPT.local.json。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
 
-环境 Session 005 重测 18/18，未改工具安装。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。优先接续：先建立可信 DNS 路径，再按 COVERAGE 补齐 WSL Web 工具（httpx/gowitness/ffuf/katana）、真实 API/第三方浏览、共享配额和并行调度。
+环境 Session 005 重测 18/18，未改工具安装。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。已完成：可信 DNS 路径（Session 008，可选 RFC 8484 DoH + 假 IP/回环答案隔离）、WSL Web 工具接入与范围契约（Session 009，broker 逐请求治理）、katana JS 端点面与工具版本矩阵（Session 010）。优先接续：JSLuice 级 JS 端点提取（需外部二进制，当前显式拒绝）、CDN 现场差分、更广 HTTPS 浏览器路径现场验收、`frontend/src/data/dataset.ts` 中仍按旧状态显示的能力徽章，以及真实授权目标链路与外部提供商账户（均需授权/密钥）。
 
 **Session 008（2026-10-14）已实施可信解析路径**：`dns.doh_resolvers`（可选，最多 4 个 `https://<IP 字面量>/…` 端点，TLS 校验、不跟随跳转、不读环境代理）作为加密来源进入 Stage 5，默认 `doh_trusted: true` 时其 A/AAAA 成为 selected，并输出 `doh_verification`；冲突产生 `dns_doh_mismatch`，无结果回退明文。Stage 4 字典/通配符解析不再继承系统解析配置；公网目标收到回环地址会以 `dns_loopback_answer` 拒绝（仅 target_local 靶场豁免）。复测修正了 Session 005 的结论：本机**系统解析**仍被劫持（服务器列表含 198.18.0.2，example.com→127.0.0.1/::1），但显式 1.1.1.1/114.114.114.114/8.8.8.8 未复现 fake-IP；云 DNS 的 1.1.1.1/8.8.8.8 DoH 在本机超时，223.5.5.5/1.12.12.12 可用。仓库内 profile 一律不默认开启 DoH（会改变解析来源与恢复指纹）；证据在 `report/validation/dns-trusted-path-20261014.json`。自有域名/API keys 仍未提供，不能把回环或主页 HEAD 当成真实资产/认证 API 验收。
 

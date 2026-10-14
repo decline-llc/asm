@@ -9,6 +9,8 @@
 - **4) 明确留待**：`frontend/src/data/dataset.ts` 的能力徽章仍按旧文档把 naabu/WSL httpx/gowitness 标为「未接入主流程」（`docs/audits/` 里的历史审阅报告也基于当时事实），需要单独一轮前端批次修改并重新构建、跑前端检查；`docs/audits/*` 属历史审阅记录，不追改；`docs/SOURCES.md` 里的是 Google DoH **JSON API**（与本次实现的 RFC 8484 线格式 DoH 不是同一入口），未混改。
 - 验证：`ruff check --no-cache asm tests tools scripts` 全绿；新增 3 项 katana/范围测试 + 4 项文档矩阵测试全通过；完整非 WSL 回归见 `docs/ACCEPTANCE.md` 本批行。证据 `report/validation/web-surface-docs-unit.xml`。
 - 边界：未改系统 DNS/代理/防火墙；未对任何真实目标发包（全部离线替身 + 127.0.0.1 回环夹具）；未开启真实 WSL 工具实跑（受限沙箱下子进程管道与浏览器启动被拒）；版本矩阵只记录既有事实，不把「已接入」等同于「已实网验收」。
+- **推送与四环境 CI（收尾）**：本批三个提交已推送 `main`：`c92dce3`（DoH 可信解析路径）→ `46695e0`（broker 范围契约）→ `7272c48`（JS 端点面 + 版本矩阵 + 文档校正）。推送前远端为 `514c945`，本次为快进（`514c945..7272c48`），未覆盖任何已有提交；推送后 `git ls-remote origin refs/heads/main` 与本地 `HEAD` 均为 `7272c48`，`git status -sb` 无 ahead/behind。四环境 CI [38589418826](https://github.com/decline-llc/asm/actions/runs/38589418826)：**run success、4/4 jobs success**（ubuntu-latest/windows-latest × Python 3.11/3.12），四个 job 的 `ruff check asm scripts tests tools`、`pytest -m "not wsl"` 与 `python -m build` 全部 success，失败注解步骤 `skipped` 即无失败用例。API 状态证据 `report/validation/push-ci-7272c48.json`（本地，不入库）。
+- 本机全量回归中 `test_configured_workers_make_real_concurrent_local_queries[dns_enum]` 抖动（`assert 'partial' == 'completed'`，该用例按设计让每个查询固定持 0.5s 以观测并发，满载时被拖到 627.876s；`dns_recursive` 同 run 仅 6.12s）：**CI 未复现**，单独复跑 2 passed（31.21s），本批未触碰任何 DNS worker 代码，判为本机沙箱负载敏感性并据实记录，不计入通过数。
 
 ## 2026-10-14 · Session 009 · WSL Web 工具范围控制：核实、加固与契约测试
 
