@@ -12,7 +12,7 @@
 
 工具在 `/home/longchuanli/asm-ws`，固定版本在 `tools/tool-lock.json`；项目只通过 stdin/tar 管道交换数据。当前 WSL 环境需为异步工具保留 Windows Popen 客户端，否则孤儿 Linux 任务可能被回收。
 
-远端用户指定 `https://github.com/decline-llc/asm.git`，main；当前代码已与远端同步：`c92dce3`（DoH 可信解析路径）→ `46695e0`（broker 范围契约）→ `7272c48`（JS 端点面 + 版本矩阵 + 文档校正）已推送，本地与远端 `refs/heads/main` 均为 `7272c48`，四环境 CI [38589418826](https://github.com/decline-llc/asm/actions/runs/38589418826) 4/4 success（Ubuntu/Windows × Python 3.11/3.12）。实际提交与 CI 证据看 WORKLOG/ACCEPTANCE，本地最终回执为 docs/PUSH_RECEIPT.local.json。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
+远端用户指定 `https://github.com/decline-llc/asm.git`，main；当前代码已与远端同步：`c92dce3`（DoH 可信解析路径）→ `46695e0`（broker 范围契约）→ `7272c48`（JS 端点面 + 版本矩阵 + 文档校正）→ `81e3132`（上一批文档回执）→ `76c9e52`（前端来源页徽章对齐 + 当前代码真实工具回环复核）已推送，本地与远端 `refs/heads/main` 均为 `76c9e52`，四环境 CI [38597421641](https://github.com/decline-llc/asm/actions/runs/38597421641) 4/4 success（Ubuntu/Windows × Python 3.11/3.12）。实际提交与 CI 证据看 WORKLOG/ACCEPTANCE，本地最终回执为 docs/PUSH_RECEIPT.local.json。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
 
 环境 Session 005 重测 18/18，未改工具安装。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。已完成：可信 DNS 路径（Session 008，可选 RFC 8484 DoH + 假 IP/回环答案隔离）、WSL Web 工具接入与范围契约（Session 009，broker 逐请求治理）、katana JS 端点面与工具版本矩阵（Session 010）、前端来源页能力徽章对齐（Session 011，只改前端）。优先接续：JSLuice 级 JS 端点提取（需外部二进制，当前显式拒绝）、CDN 现场差分、更广 HTTPS 浏览器路径现场验收，以及真实授权目标链路与外部提供商账户（均需授权/密钥）。
 
