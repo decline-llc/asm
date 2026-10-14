@@ -10,6 +10,16 @@
 - 全单元回归317通过（tool-integration-unit-all-20261012.xml），最终相关回归90通过（original-wsl-final-20261012.xml），变更Python文件Ruff及前端构建通过。全仓Ruff另有既有frontend审查脚本的11项问题，未改动无关用户文件。此前失败证据保留，不冒充真实工具执行。
 - 未查询真实账户/目标，未读取秘密，未提交/推送。OneForAll新live job/公开提供商、Masscan实际网络接口及Nmap服务/UDP/NSE等外部验收仍单独待补，已安装与回环通过不等于这些项已验收。
 
+### 收尾 · 复跑与推送
+
+- 提交前复跑完整单元回归：**320 passed**（原 317 + 3 项新增 WSL 运行时守卫测试），JUnit 0 failures/errors/skipped，证据 `data/validation/tool-integration-unit-20261012-recheck.xml`。受限沙箱内同命令有 3 项失败，全部因命名管道被拒（openssl 生成测试证书、asyncio 子进程管道），属会话沙箱限制而非代码缺陷；放宽权限后同命令全绿。新增的 3 项即上文守卫：空/不可见发行版列表不得自动创建 WSL、默认复用 Ubuntu、gowitness 无图退出 0 不算截图完成。
+- `ruff check asm scripts tests tools` 全绿：5 个既有前端探针脚本原有 11 项问题清零，仅删未使用导入/未使用局部变量、消除歧义变量名（`l`→`lbl`），无行为变更，脚本语法另行复检通过。前端 `tsc -b && vite build` 复跑通过，仅保留既有 chunk 体积告警。这两步都要求真实子进程管道，受限模式下被拒。
+- 提交 `eeddb0977b21f7514fd035001bd59c63d37b1409`（192 个文件，含工作台前端、审计文档与验收脚本）已推送 main，`git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main` 一致。首次推送因远端连接重置失败，重试后成功。
+- 暂存前断言未包含真实目标与本地数据：`待测域名.txt`、`report/`、`*.local.ts`、`.env`、`PUSH_RECEIPT.local.json` 均未进入提交；`.gitignore` 增加本机待测域名清单规则（真实目标，只能本地保留）。未提交任何凭据。
+- 四环境 CI [38563972959](https://github.com/decline-llc/asm/actions/runs/38563972959)：只有 `ubuntu-latest` + Python 3.12 的 pytest 步骤失败，同一任务的 ruff 通过；3.11 同构任务通过，Windows 两项因 fail-fast 取消。GitHub 的 job/run 日志下载对匿名访问返回 403（需仓库写权限），因此先补充**匿名可读的失败注解**再复跑定位：新增 `scripts/ci_report_failures.py`（把 JUnit 失败用例名与首行原因输出为 `::error::` 工作流命令，本地运行加 `[local]` 前缀，始终返回 0）与 CI 中 `if: failure()` 的注解步骤。
+- 本机复核未复现同一原因：Windows Python 3.11 下 320 项单元与 324 项 CI 同构套件全部通过；WSL Ubuntu 3.12.3 复跑（同一 CI 选择器）只出现 2 项浏览器用例失败，原因是该 WSL 未安装 Playwright 浏览器（截图无产物、无请求），属复现环境差异，不作为 CI 同因证据。已终止 WSL 的 Chromium 下载。
+- 本轮未重跑外部工具与真实提供商，原有回环证据保持有效；CI 复跑结论随后追加。
+
 ## 2026-10-11 · 项目分类与历史证据页面整理
 
 - 按用户澄清将业务调查与开发验收分开。18 份本机配置迁入 `profiles/investigations/`（2 份）及 `profiles/validation/`（16 份）；原数据库 15 个项目均为验收记录，在默认业务列表隐藏，测试入口保留。新配置与新交付按用途分目录，后续验收数据库独立于业务库。CLI 短配置名和 API 导入兼容分类路径。
