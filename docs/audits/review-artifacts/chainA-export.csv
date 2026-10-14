@@ -1,0 +1,5 @@
+﻿序号,资产,端口,协议,标题,技术栈,CDN,公司归属,来源,置信度,最近观测
+1,v6.example.com,443,tcp,澄川云 IPv6 门户,nginx; HTTP/2,否,澄川云,FOFA; httpx,B,2026-10-09T14:36:05Z
+2,cdn-static.example.com,443,tcp,static assets,openresty,是,澄川云,FOFA; httpx,B,2026-10-09T14:35:55Z
+3,cloud.example.com,443,tcp,澄川云控制台（CDN 节点 2）,openresty; React,是,澄川云,FOFA; httpx,A,2026-10-09T14:35:21Z
+4,cloud.example.com,443,tcp,澄川云控制台,openresty; React; WebSocket,是,澄川云,FOFA; Hunter; httpx,A,2026-10-09T14:35:20Z

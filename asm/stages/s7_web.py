@@ -7,6 +7,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from ..models import Asset
+from ..offline import ReplayHTTP, replay_screenshot
 from ..pipeline import StageResult
 from ..scope import ScopeError
 from ..utils.constants import JAVA_PRODUCTS, LEAK_PATHS, SPRAY_PATHS
@@ -53,7 +54,7 @@ def run(ctx):
             host = "[" + host + "]" if ":" in host else host
             urls.append(f"{'https' if asset['port'] in {443,8443} else 'http'}://{host}:{asset['port']}")
     urls = list(dict.fromkeys(u.rstrip("/") for u in urls))
-    http = TargetHTTP(ctx.scope, timeout=ctx.config.get("limits", {}).get("http_timeout", 15),
+    http = ReplayHTTP(ctx) if ctx.dry_run else TargetHTTP(ctx.scope, timeout=ctx.config.get("limits", {}).get("http_timeout", 15),
                       max_bytes=ctx.config.get("web", {}).get("max_response_bytes", 65536))
     count, notes = 0, []
     try:
@@ -68,7 +69,8 @@ def run(ctx):
                 continue
             parsed = urlsplit(url)
             table, asset_id = ctx.db.asset(Asset(host=parsed.hostname, port=parsed.port or (443 if parsed.scheme == "https" else 80),
-                service=parsed.scheme, title=root.title, tech=technologies(root), source="http"))
+                service=parsed.scheme, title=root.title, tech=technologies(root),
+                source="fixture_http" if ctx.dry_run else "http"))
             if table != "assets":
                 continue
             ctx.db.upsert("urls", {"url": url, "asset_id": asset_id, "title": root.title,
@@ -84,7 +86,8 @@ def run(ctx):
                     continue
                 visited.add(path)
                 endpoint = urljoin(url + "/", path.lstrip("/"))
-                time.sleep(1 / ctx.config.get("rates", {}).get("ffuf_tps", 50))
+                if not ctx.dry_run:
+                    time.sleep(1 / ctx.config.get("rates", {}).get("ffuf_tps", 50))
                 try:
                     reply = http.get(endpoint)
                 except httpx.HTTPError as exc:
@@ -117,16 +120,25 @@ def run(ctx):
                 count += 1
             if ctx.config.get("web", {}).get("screenshots", True):
                 try:
-                    screenshot(ctx, url, asset_id)
+                    if ctx.dry_run:
+                        replay_screenshot(ctx, url, asset_id, http)
+                    else:
+                        screenshot(ctx, url, asset_id)
                 except (RuntimeError, OSError) as exc:
                     notes.append("Screenshot: " + str(exc))
     finally:
         http.close()
+    if ctx.dry_run:
+        missing = sum(item["status"] == "missing_evidence" for item in http.requests)
+        if missing:
+            notes.append(f"Offline replay: {missing} requests had no saved evidence; no live fallback")
     return StageResult("partial" if notes else "completed", count, notes)
 
 
 def screenshot(ctx, url, asset_id):
     """Scoped Playwright in Windows is a library-level capability, per architecture."""
+    if ctx.dry_run:
+        return replay_screenshot(ctx, url, asset_id)
     from playwright.sync_api import sync_playwright
     destination = ctx.stage_dir.parent.parent / "screenshots" / f"asset-{asset_id}.png"
     destination.parent.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,98 @@
+SOURCE CARD: FOFA | 主流程 | 工具已安装 | 适配器存在 | 主流程已接入 | 离线已验证 | 实网已验证 | 演示调用 | 6 次 | 配置额度 | 演示额度 500 次/月 | 结果数量 | 14 | 最近错误 | 无（与「未运行」区分展示） | 主流程自动查询来源之一
+SOURCE CARD: Quake | 主流程 | 工具已安装 | 适配器存在 | 主流程已接入 | 离线已验证 | 演示调用 | 4 次 | 配置额度 | 未提供 | 结果数量 | 9 | 最近错误 | 无（与「未运行」区分展示） | 主流程自动查询来源之一；实网验证待执行
+SOURCE CARD: Hunter | 适配器存在 | 演示调用 | 2 次 | 配置额度 | 未配置凭据 | 结果数量 | 4 | 最近错误 | 无（与「未运行」区分展示） | 适配器存在，未接入主调度；演示调用为手工触发
+SOURCE CARD: ZoomEye | 适配器存在 | 未配置凭据 | 演示调用 | 未运行 | 配置额度 | 未配置凭据 | 结果数量 | 未运行 | 最近错误 | API 超时（10-09 10:11，OneForAll 渠道） | 未运行≠失败：本轮经 OneForAll 渠道尝试超时
+SOURCE CARD: Shodan | 适配器存在 | 未配置凭据 | 演示调用 | 1 次 | 配置额度 | 未配置凭据 | 结果数量 | 1 | 最近错误 | 无（与「未运行」区分展示） | 适配器存在，演示调用 1 次
+SOURCE CARD: Censys | 适配器存在 | 演示调用 | 1 次 | 配置额度 | 未提供 | 结果数量 | 1 | 最近错误 | 无（与「未运行」区分展示） | 适配器存在，未接入主调度
+SOURCE CARD: OneForAll（子域） | 主流程 | 工具已安装 | 主流程已接入 | 离线已验证 | 演示调用 | 2 次 | 配置额度 | — | 结果数量 | 34 | 最近错误 | 无（与「未运行」区分展示） | WSL 内运行，七来源白名单（默认五）
+SOURCE CARD: dnsx / dig（DNS） | 主流程 | 工具已安装 | 主流程已接入 | 离线已验证 | 演示调用 | 2 次 | 配置额度 | — | 结果数量 | 30 | 最近错误 | 无（与「未运行」区分展示） | 多上游复核；可信解析路径存在已知待解决问题
+SOURCE CARD: naabu（端口） | 主流程 | 工具已安装 | 主流程已接入 | 离线已验证 | 演示调用 | 1 次 | 配置额度 | — | 结果数量 | 22 | 最近错误 | 无（与「未运行」区分展示） | 被动梳理模式回放
+SOURCE CARD: httpx（Web 探测） | 主流程 | 工具已安装 | 主流程已接入 | 离线已验证 | 演示调用 | 2 次 | 配置额度 | — | 结果数量 | 17 | 最近错误 | 无（与「未运行」区分展示） | WSL 完整接入
+SOURCE CARD: gowitness（截图） | 主流程 | 工具已安装 | 主流程已接入 | 演示调用 | 2 次 | 配置额度 | — | 结果数量 | 13 | 最近错误 | 3 个目标失败（403/超时/TLS） | 部分失败可重试；ffuf/katana 完整接入待实现
+SOURCE CARD: ffuf / katana（待接入） | 工具已安装 | 演示调用 | 未运行 | 配置额度 | — | 结果数量 | 未运行 | 最近错误 | 无（与「未运行」区分展示） | WSL 完整接入仍待实现，本轮未运行
+SOURCE CARD: 凭据配置（掩码演示） | FOFA_KEY | demo_••••••••3f9a（仅掩码演示值） | QUAKE_KEY | demo_••••••••7b21（仅掩码演示值） | HUNTER_KEY | 未配置 | 说明 | 不收集真实密钥、不在浏览器保存真实密钥；后端通过 .env 注入，前端待接入配置接口。
+MASTER ROW COUNT: 19
+MASTER ROW: 1	www.example.com	443	澄川科技集团 - 官方网站	nginx; Vue.js; HTTP/2	—	FOFA; Quake; httpx	 | ● | A	demo-shot-www.png
+MASTER ROW: 2	www.example.com	80	301 → https://www.example.com	nginx	—	FOFA; httpx	 | ● | A	（none）
+MASTER ROW: 3	api.example.com	443	澄川开放 API 网关	nginx; Spring Boot; Swagger	—	FOFA; Quake; httpx	 | ● | A	demo-shot-api.png
+MASTER ROW: 4	api.example.com	9090	Prometheus - Time Series Collection	Prometheus; Go	测试环境	httpx	 | ● | B	（failed）
+MASTER ROW: 5	cloud.example.com	443	澄川云控制台（CDN 节点 2）	openresty; React	—	FOFA; httpx	 | ● | A	（none）
+MASTER ROW: 6	iot.example.com	8443	澄川智造 - 设备管理平台	Jetty; Java; jQuery	—	Quake; httpx	 | ● | B	demo-shot-iot.png
+MASTER ROW: 7	iot.example.com	5683	—	CoAP	—	Quake	 | ◐ | C	（none）
+MASTER ROW: 8	dev.example.com	8080	澄川测试环境 - Jenkins 构建平台	Tomcat; Jenkins; Java	测试环境; 后台入口	子域爆破; httpx; FOFA	 | ● | B	demo-shot-dev.png
+MASTER ROW: 9	dev.example.com	22	—	OpenSSH	—	端口扫描	 | ● | B	（none）
+MASTER ROW: 10	mail.example.com	443	澄川企业邮箱	nginx; Roundcube	—	FOFA; httpx	 | ● | A	demo-shot-mail.png
+MASTER ROW: 11	mail.example.com	25	—	Postfix	—	端口扫描	 | ● | A	（none）
+MASTER ROW: 12	vpn.example.com	443	SSL VPN 登录 - 澄川科技	Sangfor	远程入口	FOFA; Censys	 | ● | B	（missing）
+MASTER ROW: 13	vpn.example.com	4433	—	—	—	端口扫描	 | ◐ | C	（none）
+MASTER ROW: 14	oa.example.com	443	云帆协同办公 - 登录	Cloudflare; SaaS	SaaS 排除项	Hunter	 | ◐ | C	（none）
+MASTER ROW: 15	cdn-static.example.com	443	static assets	openresty	—	FOFA; httpx	 | ● | B	（failed）
+MASTER ROW: 16	lab.example.com	443	澄川实验室（内部系统）	nginx; Flask	测试环境	子域爆破; httpx	 | ◐ | C	demo-shot-lab.png
+MASTER ROW: 17	lab.example.com	9200	—	Elasticsearch	数据服务	httpx	 | ● | B	（none）
+MASTER ROW: 18	v6.example.com	443	澄川云 IPv6 门户	nginx; HTTP/2	IPv6	FOFA; httpx	 | ● | B	demo-shot-v6.png
+MASTER ROW: 19	192.0.2.10	8081	502 Bad Gateway	nginx	待核对	端口扫描; httpx	 | ◐ | C	（none）
+MASTER CSV ROWS: 19
+MASTER CSV HEADERS: 序号,资产,端口,标题,技术栈,等级标注,来源,置信度,截图链接
+MASTER CSV ROW: 1,www.example.com,443,澄川科技集团 - 官方网站,nginx; Vue.js; HTTP/2,—,FOFA; Quake; httpx,A,demo-shot-www.png
+MASTER CSV ROW: 2,www.example.com,80,301 → https://www.example.com,nginx,—,FOFA; httpx,A,（none）
+MASTER CSV ROW: 3,api.example.com,443,澄川开放 API 网关,nginx; Spring Boot; Swagger,—,FOFA; Quake; httpx,A,demo-shot-api.png
+MASTER CSV ROW: 4,api.example.com,9090,Prometheus - Time Series Collection,Prometheus; Go,测试环境,httpx,B,（failed）
+MASTER CSV ROW: 5,cloud.example.com,443,澄川云控制台（CDN 节点 2）,openresty; React,—,FOFA; httpx,A,（none）
+MASTER CSV ROW: 6,iot.example.com,8443,澄川智造 - 设备管理平台,Jetty; Java; jQuery,—,Quake; httpx,B,demo-shot-iot.png
+MASTER CSV ROW: 7,iot.example.com,5683,,CoAP,—,Quake,C,（none）
+MASTER CSV ROW: 8,dev.example.com,8080,澄川测试环境 - Jenkins 构建平台,Tomcat; Jenkins; Java,测试环境; 后台入口,子域爆破; httpx; FOFA,B,demo-shot-dev.png
+MASTER CSV ROW: 9,dev.example.com,22,,OpenSSH,—,端口扫描,B,（none）
+MASTER CSV ROW: 10,mail.example.com,443,澄川企业邮箱,nginx; Roundcube,—,FOFA; httpx,A,demo-shot-mail.png
+MASTER CSV ROW: 11,mail.example.com,25,,Postfix,—,端口扫描,A,（none）
+MASTER CSV ROW: 12,vpn.example.com,443,SSL VPN 登录 - 澄川科技,Sangfor,远程入口,FOFA; Censys,B,（missing）
+MASTER CSV ROW: 13,vpn.example.com,4433,,,—,端口扫描,C,（none）
+MASTER CSV ROW: 14,oa.example.com,443,云帆协同办公 - 登录,Cloudflare; SaaS,SaaS 排除项,Hunter,C,（none）
+MASTER CSV ROW: 15,cdn-static.example.com,443,static assets,openresty,—,FOFA; httpx,B,（failed）
+MASTER CSV ROW: 16,lab.example.com,443,澄川实验室（内部系统）,nginx; Flask,测试环境,子域爆破; httpx,C,demo-shot-lab.png
+MASTER CSV ROW: 17,lab.example.com,9200,,Elasticsearch,数据服务,httpx,B,（none）
+MASTER CSV ROW: 18,v6.example.com,443,澄川云 IPv6 门户,nginx; HTTP/2,IPv6,FOFA; httpx,B,demo-shot-v6.png
+MASTER CSV ROW: 19,192.0.2.10,8081,502 Bad Gateway,nginx,待核对,端口扫描; httpx,C,（none）
+MASTER CSV contains shop: False; 198.51.100.50: False; cloud|443 rows: 1
+ASSET TABS: 服务资产=20 / Web 页面=16 / 域名=14 / IP=14 / 隔离候选=3
+TAB [服务资产] rows=10
+  	192.0.2.10 | 192.0.2.10 | 	8081/tcp	 | 502 Bad Gateway | 待核对	未确认	nginx	—	 | ◐ | C	端口扫描、httpx	2026-10-09 14:36:12
+  	v6.example.com | 2001:db8::10 | 	443/tcp	 | 澄川云 IPv6 门户 | IPv6	澄川云	nginx · HTTP/2	—	 | ● | B	FOFA、httpx	2026-10-09 14:36:05
+  	lab.example.com | 203.0.113.77 | 	9200/tcp	 | — | 数据服务	澄川科技	Elasticsearch	—	 | ● | B	httpx	2026-10-09 14:36:02
+  	lab.example.com | 203.0.113.77 | 	443/tcp	 | 澄川实验室（内部系统） | 测试环境	澄川科技	nginx · Flask	—	 | ◐ | C	子域爆破、httpx	2026-10-09 14:36:00
+  	cdn-static.example.com | 198.51.100.30 | 	443/tcp	 | static assets | 	澄川云	openresty	CDN	 | ● | B	FOFA、httpx	2026-10-09 14:35:55
+  	oa.example.com | 198.51.100.99 | 	443/tcp	 | 云帆协同办公 - 登录 | SaaS 排除项	澄川科技	Cloudflare · SaaS	CDN	 | ◐ | C	Hunter	2026-10-09 14:35:52
+  	vpn.example.com | 203.0.113.60 | 	4433/udp	 | — | 	澄川科技	—	—	 | ◐ | C	端口扫描	2026-10-09 14:35:48
+  	vpn.example.com | 203.0.113.60 | 	443/tcp	 | SSL VPN 登录 - 澄川科技 | 远程入口	澄川科技	Sangfor	—	 | ● | B	FOFA、Censys	2026-10-09 14:35:46
+  	mail.example.com | 203.0.113.25 | 	25/tcp	 | — | 	澄川科技	Postfix	—	 | ● | A	端口扫描	2026-10-09 14:35:42
+  	mail.example.com | 203.0.113.25 | 	443/tcp	 | 澄川企业邮箱 | 	澄川科技	nginx · Roundcube	—	 | ● | A	FOFA、httpx	2026-10-09 14:35:40
+TAB [Web 页面] rows=10
+  	192.0.2.10 | 192.0.2.10 | 	8081/tcp	 | 502 Bad Gateway | 待核对	未确认	nginx	—	 | ◐ | C	端口扫描、httpx	2026-10-09 14:36:12
+  	v6.example.com | 2001:db8::10 | 	443/tcp	 | 澄川云 IPv6 门户 | IPv6	澄川云	nginx · HTTP/2	—	 | ● | B	FOFA、httpx	2026-10-09 14:36:05
+  	lab.example.com | 203.0.113.77 | 	9200/tcp	 | — | 数据服务	澄川科技	Elasticsearch	—	 | ● | B	httpx	2026-10-09 14:36:02
+  	lab.example.com | 203.0.113.77 | 	443/tcp	 | 澄川实验室（内部系统） | 测试环境	澄川科技	nginx · Flask	—	 | ◐ | C	子域爆破、httpx	2026-10-09 14:36:00
+  	cdn-static.example.com | 198.51.100.30 | 	443/tcp	 | static assets | 	澄川云	openresty	CDN	 | ● | B	FOFA、httpx	2026-10-09 14:35:55
+  	oa.example.com | 198.51.100.99 | 	443/tcp	 | 云帆协同办公 - 登录 | SaaS 排除项	澄川科技	Cloudflare · SaaS	CDN	 | ◐ | C	Hunter	2026-10-09 14:35:52
+  	vpn.example.com | 203.0.113.60 | 	443/tcp	 | SSL VPN 登录 - 澄川科技 | 远程入口	澄川科技	Sangfor	—	 | ● | B	FOFA、Censys	2026-10-09 14:35:46
+  	mail.example.com | 203.0.113.25 | 	443/tcp	 | 澄川企业邮箱 | 	澄川科技	nginx · Roundcube	—	 | ● | A	FOFA、httpx	2026-10-09 14:35:40
+  	dev.example.com | 203.0.113.40 | 	8080/tcp	 | 澄川测试环境 - Jenkins 构建平台 | 测试环境后台入口	澄川科技	Tomcat · Jenkins · Java	—	 | ● | B	子域爆破、httpx、FOFA	2026-10-09 14:
+  	iot.example.com | 192.0.2.44 | 	8443/tcp	 | 澄川智造 - 设备管理平台 | 	澄川智造	Jetty · Java · jQuery	—	 | ● | B	Quake、httpx	2026-10-09 14:35:27
+TAB [IP] rows=14
+  192.0.2.10	演示保留段	1	8081/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  192.0.2.200	演示保留段	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  192.0.2.44	演示保留段	2	8443/tcp，5683/udp	解析到该 IP 不代表其所有服务均属目标公司
+  198.51.100.21	演示保留段	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  198.51.100.22	演示保留段	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  198.51.100.30	演示保留段	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  198.51.100.50	演示保留段	1	7547/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  198.51.100.99	演示保留段	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  2001:db8::10	IPv6	1	443/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  203.0.113.10	演示保留段	4	443/tcp，80/tcp，443/tcp，9090/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  203.0.113.25	演示保留段	2	443/tcp，25/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  203.0.113.40	演示保留段	2	8080/tcp，22/tcp	解析到该 IP 不代表其所有服务均属目标公司
+  203.0.113.60	演示保留段	2	443/tcp，4433/udp	解析到该 IP 不代表其所有服务均属目标公司
+  203.0.113.77	演示保留段	2	443/tcp，9200/tcp	解析到该 IP 不代表其所有服务均属目标公司
+TAB [隔离候选] rows=3
+  chengchuan-pay.example:443	澄川支付平台（模糊命中）	 | ▲ | D	第三方搜索	搜索「澄川」模糊命中，域名与已知根域无注册/备案关联证据	2026-10-08 03:11:00
+  cc-tech-login.example:443	CC Tech Login	 | ▲ | D	第三方搜索	品牌缩写相似，注册时间晚于本调查启动，疑似仿冒，隔离待核	2026-10-08 03:12:00
+  203.0.113.250:8080	澄川内部系统（未验证）	 | ▲ | D+	Hunter	页面标题含品牌词，但该地址段无归属记录，不能仅凭标题入册	2026-10-08 05:40:00
+STAT FEET: host+port+proto 去重；D/D+ 不计入 / 含候选关系域名，去重后口径 / 另有 3 条 D 级隔离候选 / RUN-20261002-01 → RUN-20261009-01

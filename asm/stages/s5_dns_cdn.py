@@ -125,6 +125,9 @@ def collect_wsl(ctx, domains, settings):
 
 
 def probe_takeover(ctx, domain, terminal):
+    if getattr(ctx, "dry_run", False):
+        # A direct helper call must obey the same boundary as stage ingestion.
+        return
     client = TargetHTTP(ctx.scope, timeout=ctx.config.get("limits", {}).get("http_timeout", 15))
     try:
         for scheme in ("https", "http"):
@@ -239,7 +242,8 @@ def ingest(ctx, observations, settings, notes=None):
                 notes.append(f"CNAME chain {chain['status']} for {domain} via {resolver}")
             elif chain["status"] == "nxdomain" and chain["chain"]:
                 ctx.note("dangling_cname_candidate", domain, json.dumps({"resolver": resolver, **chain}))
-        if settings.takeover_probe and ctx.scope.authorized and not ctx.passive_only:
+        if (settings.takeover_probe and ctx.scope.authorized and not ctx.passive_only
+                and not getattr(ctx, "dry_run", False)):
             for terminal in set(chain["terminal"] for chain in item["chains"].values()
                                 if chain["chain"] and chain["status"] in ("complete", "nxdomain")):
                 probe_takeover(ctx, domain, terminal)

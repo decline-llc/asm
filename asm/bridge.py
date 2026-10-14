@@ -44,7 +44,7 @@ def native_path(path):
 
 class Bridge:
     def __init__(self, distro=None, user=None, *, executable="wsl.exe", runner=None):
-        self.distro = distro or os.getenv("WSL_DISTRO", "Ubuntu-22.04")
+        self.distro = distro or os.getenv("WSL_DISTRO", "Ubuntu")
         self.user = user if user is not None else os.getenv("WSL_USER", "")
         self.executable = executable
         self.runner = runner or subprocess.run

@@ -1,0 +1,151 @@
+# 三个产品运行预设；只定义功能组合、计划和默认参数，不授予任何项目权限。
+# asm.conf/policy/Workbench 已读取并执行此策略；旧 schema1阶段保持兼容。
+# schema2必须走统一Workbench（CLI run自动转接），不能经旧整阶段绕过独立权限。
+# 代码接入不等于所有工具实跑；缺依赖、来源或插件会明确blocked，见当前接力与测试证据。
+schema_version: 2
+version: "2026-10-12.1"
+integration_status: consumed_by_workbench_policy_and_plan
+
+policy:
+  permission_default: deny
+  unknown_capability: reject_before_start
+  unknown_mode: reject_before_start
+  active_execution_requires: [authorization_true, explicit_nonempty_scope, function_permission, selected_step, available_adapter, valid_budget]
+  discovery_out_of_scope: hold_for_manual_scope_addition
+  recheck_before_each_action: true
+  recheck_http_redirect_and_browser_requests: true
+  authorization_window_required_for_external_active_targets: true
+  execution_sources: [live, replay]
+  replay_network_requests: false
+  # replay 与 legacy dry-run 均已验证阻断外部I/O；缺证据不在线回退。
+  resume_uses_versioned_permissions: true
+  always_run_internal_steps: [evidence_normalize, ownership_review, coverage_summary, dual_reports]
+
+reports:
+  variants: [professional, user_custom]
+  formats: [csv, html, md]
+  snapshot_policy: immutable
+  mandatory: true
+  integration_status: immutable_dual_reports_integrated_offline_verified
+
+# adapter_status 表示代码接入程度，并非工具安装、此次实跑或逐功能门控验证结论。
+# Workbench按独立能力与所选来源执行；目录状态不代替实际依赖与覆盖证据。
+capability_catalog:
+  search: {active_target_traffic: false, adapter_status: multi_engine_independent_steps_existing_engine_adapters, adapter_candidates: [fofa, quake, hunter, censys, zoomeye, shodan]}
+  company_lookup: {active_target_traffic: false, adapter_status: saved_company_equity_icp_parsers_live_provider_pending, adapter_candidates: [company_evidence_import, stage_2a, stage_2b]}
+  passive_subdomains: {active_target_traffic: false, adapter_status: existing_stage_4_passive_sources, adapter_candidates: [subfinder, oneforall_passive, certificate_indexes, archive_indexes]}
+  osint: {active_target_traffic: false, adapter_status: sourcegraph_stream_and_saved_tender_metadata_adapters_fixture_verified, adapter_candidates: [stage_p1, sourcegraph_stream, tender_import, osint_evidence_import]}
+  passive_supply_chain: {active_target_traffic: false, adapter_status: saved_relationship_certificate_neighbor_candidate_analysis_fixture_verified, adapter_candidates: [saved_supply_analysis, stage_p2]}
+  dns_recursive: {active_target_traffic: true, adapter_status: existing_stage_5, adapter_candidates: [dig_probe, dnsx, dnspython]}
+  tcp_scan: {active_target_traffic: true, adapter_status: independent_runtime_adapter, adapter_candidates: [nmap, masscan, naabu, a_scan, python_socket]}
+  service_probe: {active_target_traffic: true, adapter_status: independent_nmap_version_probe_mock_verified_runtime_dependency_required, adapter_candidates: [nmap]}
+  web_visit: {active_target_traffic: true, adapter_status: native_and_isolated_http_tool_adapters, adapter_candidates: [target_http, httpx]}
+  tls_inspect: {active_target_traffic: true, adapter_status: native_tls_local_fixture_verified, adapter_candidates: [native_tls, planned_tls_inspector]}
+  screenshot: {active_target_traffic: true, adapter_status: playwright_and_isolated_gowitness_adapters, adapter_candidates: [playwright, gowitness]}
+  dns_enum: {active_target_traffic: true, adapter_status: existing_stage_4_basic_dictionary, adapter_candidates: [dnspython_dictionary]}
+  udp_scan: {active_target_traffic: true, adapter_status: independent_runtime_adapter, adapter_candidates: [nmap, python_socket]}
+  deep_service_probe: {active_target_traffic: true, adapter_status: explicit_nmap_script_adapter_local_mock_verified, adapter_candidates: [nmap, planned_service_plugins]}
+  web_crawl: {active_target_traffic: true, adapter_status: native_and_isolated_katana_adapters, adapter_candidates: [native_crawler, katana, planned_crawler]}
+  js_analysis: {active_target_traffic: true, adapter_status: native_js_candidates_local_live_and_recovery_verified, adapter_candidates: [native_js_analyzer, planned_js_analyzer]}
+  web_path_enum: {active_target_traffic: true, adapter_status: native_and_isolated_ffuf_adapters, adapter_candidates: [stage_7_paths, ffuf, planned_dictionary_adapter]}
+  exposure_check: {active_target_traffic: true, adapter_status: existing_stage_7_basic_review_candidates, adapter_candidates: [stage_7_exposure, planned_exposure_plugins]}
+  vulnerability_check: {active_target_traffic: true, adapter_status: native_checks_and_isolated_approved_http_templates_waf_fingerprint, adapter_candidates: [native_risk_checks, nuclei, wafw00f, planned_approved_check_runner]}
+  takeover_probe: {active_target_traffic: true, adapter_status: approved_provider_http_marker_candidates_local_live_verified, adapter_candidates: [stage_5_takeover_fingerprint]}
+  auth_audit: {active_target_traffic: true, adapter_status: native_anonymous_access_candidates_local_live_verified_credential_checks_pending, adapter_candidates: [native_auth_audit, planned_auth_audit]}
+
+defaults:
+  params:
+    feedback: {max_rounds: 3, out_of_scope: hold_for_manual_scope_addition}
+    search: {engines: [fofa, quake, hunter, censys], max_pages_per_query: 2}
+    company_lookup: {include_controlled_entities: true, affiliation_evidence_required: true}
+    passive_subdomains: {sources: [subfinder, oneforall_passive, certificate_indexes, archive_indexes], timeout_seconds: 900}
+    osint: {max_results_per_source: 100, evidence_required: true}
+    passive_supply_chain: {certificate_domain_limit: 8, neighbor_ip_limit: 6, inferred_scope_auto_add: false}
+    dns_recursive: {record_types: [A, AAAA, MX, NS, CNAME], resolvers: ["1.1.1.1", "114.114.114.114", "8.8.8.8"], timeout_seconds: 3, workers: 8, max_cname_hops: 16, reject_fake_ip: true}
+    tcp_scan: {engine: nmap, ports_policy: explicit, ports: "1-1000", packets_per_second: 100, host_timeout_seconds: 120}
+    service_probe: {engine: nmap, version_detection: true, version_intensity: 7, timeout_seconds: 180}
+    web_visit: {methods: [GET], timeout_seconds: 15, max_response_bytes: 65536, max_redirects: 5, recheck_redirect_scope: true}
+    tls_inspect: {timeout_seconds: 10, collect_certificate_chain: true, collect_protocols: true}
+    screenshot: {engine: playwright, full_page: true, timeout_seconds: 15, service_workers: block, accept_downloads: false, recheck_each_request_scope: true, tool_options: {gowitness: {driver: gorod, timeout_seconds: 60}}}
+    dns_enum: {dictionary: built_in_basic, workers: 8, wildcard_baseline_queries: 2, max_candidates_per_root: 1000}
+    udp_scan: {engine: nmap, ports_policy: explicit, ports: "53,123,161,500,4500", packets_per_second: 20, host_timeout_seconds: 120}
+    deep_service_probe: {approved_probes: [], timeout_seconds: 180}
+    web_crawl: {max_depth: 2, max_urls_per_host: 200, requests_per_second: 2, follow_out_of_scope: false}
+    js_analysis: {max_files_per_host: 50, max_bytes_per_file: 1048576, verify_discovered_endpoints: false}
+    web_path_enum: {dictionary: built_in_basic, requests_per_second: 10, max_requests_per_host: 1000, include_random_baseline: true}
+    exposure_check: {approved_checks: [public_configuration, exposed_backups, source_control_metadata, middleware_management, public_api_schema], requests_per_second: 5, evidence_status: review}
+    vulnerability_check: {approved_checks: [], requests_per_second: 2, max_requests_per_host: 100, evidence_status: review}
+    takeover_probe: {approved_providers: [], collect_fingerprint_only: true, claim_external_resource: false}
+    auth_audit: {approved_checks: [], account_source: explicit_project_configuration, max_attempts_per_account: 1}
+  budgets:
+    max_rounds: 3
+    max_pages_per_query: 2
+    max_hosts: 1000
+    max_duration_seconds: 7200
+    account_quota_scope: shared_across_projects_modes_runs
+  tools:
+    search: fofa
+    company_lookup: company_evidence_import
+    osint: stage_p1
+    passive_supply_chain: saved_supply_analysis
+    passive_subdomains: certificate_indexes
+    dns_recursive: dnspython
+    dns_enum: dnspython_dictionary
+    tcp_scan: nmap
+    udp_scan: nmap
+    service_probe: nmap
+    web_visit: target_http
+    screenshot: playwright
+    tls_inspect: native_tls
+    deep_service_probe: nmap
+    web_crawl: native_crawler
+    js_analysis: native_js_analyzer
+    vulnerability_check: native_risk_checks
+    auth_audit: native_auth_audit
+    takeover_probe: stage_5_takeover_fingerprint
+
+presets:
+  passive_discovery:
+    label: 被动调查
+    description: 通过第三方公开索引和留档证据收集资产；不对目标发起 DNS、端口或 Web 请求。
+    capabilities: [search, company_lookup, passive_subdomains, osint, passive_supply_chain]
+    default_plan: passive_loop
+    default_params: {feedback: {max_rounds: 3}, passive_supply_chain: {inferred_scope_auto_add: false}}
+  authorized_verify:
+    label: 授权核实
+    description: 包含被动调查，并按项目各项权限主动解析 DNS、探测 TCP/服务、访问 Web、核实 TLS 和截图。
+    extends: passive_discovery
+    add_capabilities: [dns_recursive, tcp_scan, service_probe, web_visit, tls_inspect, screenshot]
+    default_plan: verify_loop
+    default_params:
+      tcp_scan: {ports_policy: explicit, ports: "1-1000", packets_per_second: 100}
+      web_visit: {timeout_seconds: 15}
+  full_asm:
+    label: 全面 ASM
+    description: 同时覆盖被动与主动测绘，包括 DNS/TCP/UDP/服务/Web/TLS/截图/爬取/JS/路径/暴露及风险核查；执行取决于项目授权、逐功能范围和实际已接入适配器。
+    extends: authorized_verify
+    add_capabilities: [dns_enum, udp_scan, deep_service_probe, web_crawl, js_analysis, web_path_enum, exposure_check, vulnerability_check, takeover_probe, auth_audit]
+    default_plan: full_loop
+    default_params:
+      tcp_scan: {ports_policy: explicit, ports: "1-65535", packets_per_second: 100, split_batches: true, batch_size: 512}
+      udp_scan: {ports_policy: explicit, ports: "53,123,161,500,4500", packets_per_second: 20}
+      web_crawl: {max_depth: 2, max_urls_per_host: 200, requests_per_second: 2}
+      web_path_enum: {requests_per_second: 10, max_requests_per_host: 1000}
+      vulnerability_check: {approved_checks: []}
+      # 全面模式支持专项认证核查，但必须明确选择并配置方案后才加入计划。
+      auth_audit: {approved_checks: []}
+
+plans:
+  passive_loop:
+    steps: [company_lookup, passive_subdomains, search, osint, passive_supply_chain]
+    feedback: {enabled: true, max_rounds: 3, out_of_scope: hold_for_manual_scope_addition}
+  verify_loop:
+    extends: passive_loop
+    add_steps: [dns_recursive, tcp_scan, service_probe, web_visit, tls_inspect, screenshot]
+  full_loop:
+    extends: verify_loop
+    add_steps: [dns_enum, udp_scan, deep_service_probe, web_crawl, js_analysis, web_path_enum, exposure_check, vulnerability_check, takeover_probe]
+    optional_steps: [auth_audit]
+    # 所需适配器未接入/缺工具/无检查清单：标记 blocked 或 skipped_with_reason，不能记作已检测。
+    unavailable_adapter_policy: record_explicit_gap
+    empty_approved_checks_policy: skip_with_reason

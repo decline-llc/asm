@@ -26,7 +26,7 @@ if [ "${ASM_SKIP_APT:-0}" != 1 ]; then
   [ "$(id -u)" = 0 ] || { echo "Run apt phase via wsl -u root" >&2; exit 2; }
   apt-get "${APT_ARGS[@]}" update
   apt-get "${APT_ARGS[@]}" install -y nmap masscan dnsutils jq curl unzip git build-essential libpcap-dev \
-    python3 python3-pip python3-venv ca-certificates
+    python3 python3-pip python3-venv ca-certificates util-linux iproute2 openssl
 fi
 LOCK="$WS_DIR/tool-lock.json"
 jq -c '.binaries[]' "$LOCK" | while read -r entry; do

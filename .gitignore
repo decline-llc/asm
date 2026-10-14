@@ -18,8 +18,28 @@ data/*
 *.db-wal
 *.xlsx
 profiles/local*.yaml
+profiles/investigations/local*.yaml
+profiles/validation/local*.yaml
+profiles/demo/local*.yaml
 tools/local/
 docs/PUSH_RECEIPT.local.json
 # 沙箱 ACL 修复临时产物（仅本机，不提交）
 .acl-recovery/
 .acl-recovery*/
+
+frontend/node_modules/
+frontend/.npm-cache/
+frontend/dist/
+
+# ===== 真实目标数据与交付产物（只能本地，禁止入库/上传） =====
+# 交付目录：report/<target>_delivery/ 含真实目标的资产/证据/工具/截图/限速账本，
+# 试点工具脚本随交付存放（report/*/tools/），一并被本规则排除
+report/
+# 前端真实证据数据模块（生成文件，含目标域名/IP；入库版本是无数据回落桩）
+frontend/src/data/*.local.ts
+# 交付给外部 AI 的轮次文档（含真实目标资产明细，按需脱敏后才可入库）
+docs/audits/CHATGPT_NEXT_ROUND_PROMPT.md
+# 本机待测域名清单（真实目标资产，只能本地保留）
+待测域名.txt
+# 一次性/临时脚本
+scripts/_*.py

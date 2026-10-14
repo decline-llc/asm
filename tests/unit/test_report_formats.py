@@ -119,7 +119,7 @@ def test_cli_export_suffix_selects_bundle_name(project, tmp_path, monkeypatch, s
     config = replace(load_config('demo', project), root=tmp_path)
     with Database(config.output / 'asm.db') as database:
         database.asset(Asset(host='a.example.invalid'))
-    monkeypatch.setattr('asm.cli.load_config', lambda *_: config)
+    monkeypatch.setattr('asm.cli.load_config', lambda *_, **_kwargs: config)
     output = tmp_path / f'custom.{suffix}'
     result = CliRunner().invoke(main, ['report', '--profile', 'demo', '--output', str(output)])
     assert result.exit_code == 0, result.output
@@ -134,7 +134,7 @@ def test_default_pipeline_reports_supply_branch_results(project, tmp_path, monke
     config = replace(load_config('demo', project), data={**load_config('demo', project).data,
                                                      'supply_chain': {'vendor_list': ['FIXTURE_VENDOR']}})
     config = replace(config, data={**config.data, 'output': {'dir': str(tmp_path)}})
-    monkeypatch.setattr('asm.pipeline.load_config', lambda *_: config)
+    monkeypatch.setattr('asm.pipeline.load_config', lambda *_, **_kwargs: config)
     result = run_pipeline(dry_run=True, passive_only=True)
     assert list(result)[-1] == '8'
     assert result['8']['status'] == 'completed'

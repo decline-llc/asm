@@ -1,12 +1,12 @@
 # 验收状态
 
-2026-10-10，Session 006（CSV/独立 HTML 报告与工具 reference）。完整完成定义仍为原设计第 10 章；不可把接口存在或 fixtures 回放当作实网验收通过。
+2026-10-12，已有工具流程接入与原 WSL 核对（表格按批次保留各自证据；最新能力与缺口清单见 WORKBENCH_CAPABILITIES.md 与 TOOL_INTEGRATION.md）。完整完成定义仍为原设计第 10 章；不可把接口存在或 fixtures 回放当作实网验收通过。
 
 | 项目 | 当前证据 | 状态 |
 |---|---|---|
 | Windows / WSL 架构 | PowerShell Core 7.6.5、Windows .venv Python 3.11.9、既有 Ubuntu 24.04 WSL2 | 已验证；发行版版本有差异 |
 | 静态检查 | ruff 当前全绿 | 已通过 |
-| 单元与集成 | 最新完整 `ASM_TEST_WSL=1 pytest` 60 passed in 69.22s；XML 在 data/validation/report-formats-full.xml，0 failures/errors/skipped，含 9 项真实 WSL 验证 | 已通过，无 skip |
+| 单元与集成 | Session 006 完整 `ASM_TEST_WSL=1 pytest` 60 passed in 69.22s；XML 在 data/validation/report-formats-full.xml，0 failures/errors/skipped，含 9 项真实 WSL 验证 | 已通过，无 skip |
 | 模糊资产隔离 | 单元与报告测试：D 级不进入 assets/总表 | 已通过 |
 | FOFA 硬限速 | 实际 MockTransport 两次请求间隔 >=15s；超配额零请求 | 已通过 |
 | 本地 HTTP | 全部注入路由发现、catch-all 区分、跳转越界先阻断 | 已通过 |
@@ -25,6 +25,11 @@
 | 两端公网 DNS | 系统及三个显式公共上游 UDP/TCP 53 都返回 example.com=198.18.0.122；HTTPS DNS 对照得公网地址，Windows 曾超时后成功 | 实网可信解析未通过；显式上游仍受 fake-IP 影响 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |
+| 多工具调度接入 | 已有工具按能力/工具独立入队：dnsx/dig、naabu/a_scan、httpx/ffuf/katana/gowitness/nuclei/wafw00f、OneForAll 隔离 live job 与 SecLists 冻结输入；`tool_options` 覆盖、独立来源/原生输出/证据 hash/双版报告/恢复；本批专项 73 通过（data/validation/external-tools-20261012.xml） | 代码接入及离线/回环通过；真实提供商账户、外部白名单与更广 HTTPS 浏览器路径待验证 |
+| 原 WSL 真实回环 | 原 `Ubuntu`/WSL2、用户 longchuanli、工作区 /home/longchuanli/asm-ws；dig/dnsx、naabu/a_scan/Nmap 五项与 httpx/ffuf/katana/wafw00f/nuclei 五项均 completed，gowitness（gorod）实跑生成 1280×720 PNG 并进入双报告（data/validation/native-tools-live-20261012-150726/、external-tools-live-20261012-151602/） | 回环夹具实跑通过；Masscan 网络接口、Nmap 服务/UDP/NSE 仍待外部验收 |
+| WSL 运行时守卫 | 空/不可见发行版列表不得自动创建或注销 WSL、默认复用 Ubuntu、gowitness 无图退出 0 不得算截图完成；最终相关回归 90 通过（data/validation/original-wsl-final-20261012.xml） | 已通过 |
+| 单元与集成（本批） | 完整单元回归 **320 passed**（原 317 + 3 项新增 WSL 运行时守卫），JUnit 0 failures/errors/skipped（data/validation/tool-integration-unit-20261012-recheck.xml）；受限沙箱内有 3 项管道用例被拒，属环境限制，宽权限下同命令全部通过 | 已通过 |
+| 静态检查（本批） | `ruff check asm tests tools` 全绿；5 个前端探针脚本原有 11 项问题本轮清零（仅删未用导入/未用局部变量、消除歧义变量名，无行为变更） | 已通过 |
 | GitHub | 本批代码 `5e8913fd5307b63f384c96be3891d7121fd9e81b` 已推送 main，本地与远端 SHA 一致；四环境 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) run 与 4/4 jobs 全部 success，Ubuntu/Windows × Python 3.11/3.12 的 ruff、非 WSL 测试、sdist/wheel 构建均通过 | 已验证；收尾仅同步文档 |
 
 `ruff` 与 `pip check` 全绿，sdist 和 wheel 构建成功。wheel 仅包含 Python 包，运行 profiles/fixtures/init-wsl 仍需仓库 editable 安装。

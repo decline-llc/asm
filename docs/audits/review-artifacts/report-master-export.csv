@@ -1,0 +1,20 @@
+﻿序号,资产,端口,标题,技术栈,等级标注,来源,置信度,截图链接
+1,www.example.com,443,澄川科技集团 - 官方网站,nginx; Vue.js; HTTP/2,—,FOFA; Quake; httpx,A,demo-shot-www.png
+2,www.example.com,80,301 → https://www.example.com,nginx,—,FOFA; httpx,A,（none）
+3,api.example.com,443,澄川开放 API 网关,nginx; Spring Boot; Swagger,—,FOFA; Quake; httpx,A,demo-shot-api.png
+4,api.example.com,9090,Prometheus - Time Series Collection,Prometheus; Go,测试环境,httpx,B,（failed）
+5,cloud.example.com,443,澄川云控制台（CDN 节点 2）,openresty; React,—,FOFA; httpx,A,（none）
+6,iot.example.com,8443,澄川智造 - 设备管理平台,Jetty; Java; jQuery,—,Quake; httpx,B,demo-shot-iot.png
+7,iot.example.com,5683,,CoAP,—,Quake,C,（none）
+8,dev.example.com,8080,澄川测试环境 - Jenkins 构建平台,Tomcat; Jenkins; Java,测试环境; 后台入口,子域爆破; httpx; FOFA,B,demo-shot-dev.png
+9,dev.example.com,22,,OpenSSH,—,端口扫描,B,（none）
+10,mail.example.com,443,澄川企业邮箱,nginx; Roundcube,—,FOFA; httpx,A,demo-shot-mail.png
+11,mail.example.com,25,,Postfix,—,端口扫描,A,（none）
+12,vpn.example.com,443,SSL VPN 登录 - 澄川科技,Sangfor,远程入口,FOFA; Censys,B,（missing）
+13,vpn.example.com,4433,,,—,端口扫描,C,（none）
+14,oa.example.com,443,云帆协同办公 - 登录,Cloudflare; SaaS,SaaS 排除项,Hunter,C,（none）
+15,cdn-static.example.com,443,static assets,openresty,—,FOFA; httpx,B,（failed）
+16,lab.example.com,443,澄川实验室（内部系统）,nginx; Flask,测试环境,子域爆破; httpx,C,demo-shot-lab.png
+17,lab.example.com,9200,,Elasticsearch,数据服务,httpx,B,（none）
+18,v6.example.com,443,澄川云 IPv6 门户,nginx; HTTP/2,IPv6,FOFA; httpx,B,demo-shot-v6.png
+19,192.0.2.10,8081,502 Bad Gateway,nginx,待核对,端口扫描; httpx,C,（none）

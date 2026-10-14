@@ -1,0 +1,15 @@
+id: asm-local-fixture-observation
+info:
+  name: ASM local fixture observation
+  author: asm-workbench
+  severity: info
+  description: Matches the owned loopback fixture page; this is not a vulnerability.
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/"
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Fixture Portal"

@@ -1,0 +1,16 @@
+﻿序号,资产,端口,协议,标题,技术栈,CDN,公司归属,来源,置信度,最近观测
+1,v6.example.com,443,tcp,澄川云 IPv6 门户,nginx; HTTP/2,否,澄川云,FOFA; httpx,B,2026-10-09T10:10:23:05Z
+2,lab.example.com,9200,tcp,,Elasticsearch,否,澄川科技,httpx,B,2026-10-09T10:10:23:02Z
+3,lab.example.com,443,tcp,澄川实验室（内部系统）,nginx; Flask,否,澄川科技,子域爆破; httpx,C,2026-10-09T10:10:23:00Z
+4,cdn-static.example.com,443,tcp,static assets,openresty,是,澄川云,FOFA; httpx,B,2026-10-09T10:10:22:55Z
+5,vpn.example.com,443,tcp,SSL VPN 登录 - 澄川科技,Sangfor,否,澄川科技,FOFA; Censys,B,2026-10-09T10:10:22:46Z
+6,mail.example.com,25,tcp,,Postfix,否,澄川科技,端口扫描,A,2026-10-09T10:10:22:42Z
+7,mail.example.com,443,tcp,澄川企业邮箱,nginx; Roundcube,否,澄川科技,FOFA; httpx,A,2026-10-09T10:10:22:40Z
+8,dev.example.com,22,tcp,,OpenSSH,否,澄川科技,端口扫描,B,2026-10-09T10:10:22:35Z
+9,dev.example.com,8080,tcp,澄川测试环境 - Jenkins 构建平台,Tomcat; Jenkins; Java,否,澄川科技,子域爆破; httpx; FOFA,B,2026-10-09T10:10:22:33Z
+10,iot.example.com,8443,tcp,澄川智造 - 设备管理平台,Jetty; Java; jQuery,否,澄川智造,Quake; httpx,B,2026-10-09T10:10:22:27Z
+11,cloud.example.com,443,tcp,澄川云控制台,openresty; React; WebSocket,是,澄川云,FOFA; Hunter; httpx,A,2026-10-09T10:10:22:21Z
+12,api.example.com,9090,tcp,Prometheus - Time Series Collection,Prometheus; Go,否,澄川科技,httpx,B,2026-10-09T10:10:22:15Z
+13,api.example.com,443,tcp,澄川开放 API 网关,nginx; Spring Boot; Swagger,否,澄川科技,FOFA; Quake; httpx,A,2026-10-09T10:10:22:08Z
+14,www.example.com,80,tcp,301 → https://www.example.com,nginx,否,澄川科技,FOFA; httpx,A,2026-10-09T10:10:22:04Z
+15,www.example.com,443,tcp,澄川科技集团 - 官方网站,nginx; Vue.js; HTTP/2,否,澄川科技,FOFA; Quake; httpx,A,2026-10-09T10:10:22:02Z

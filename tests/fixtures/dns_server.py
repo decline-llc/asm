@@ -81,9 +81,20 @@ class TCP(socketserver.BaseRequestHandler):
 
 class DNSFixture:
     def __init__(self, records, port=0):
-        self.udp = socketserver.ThreadingUDPServer(("127.0.0.1", port), UDP)
-        self.port = self.udp.server_address[1]
-        self.tcp = socketserver.ThreadingTCPServer(("127.0.0.1", self.port), TCP)
+        # UDP's automatic port can be occupied or excluded for TCP on Windows.
+        # Find a port available for both protocols, closing every rejected pair.
+        for attempt in range(16):
+            udp = socketserver.ThreadingUDPServer(("127.0.0.1", port), UDP)
+            try:
+                tcp = socketserver.ThreadingTCPServer(("127.0.0.1", udp.server_address[1]), TCP)
+            except OSError as exc:
+                udp.server_close()
+                if port or attempt == 15 or exc.errno not in (13, 48, 98, 10013, 10048):
+                    raise
+            else:
+                self.udp, self.tcp = udp, tcp
+                self.port = udp.server_address[1]
+                break
         for server in (self.udp, self.tcp):
             server.daemon_threads = True
             server.records = records

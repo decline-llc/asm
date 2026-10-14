@@ -28,7 +28,7 @@ def test_report_contract_and_isolation(db, tmp_path):
 def test_resume_exact_config(project, tmp_path, monkeypatch):
     config = load_config("demo", project)
     config = replace(config, root=tmp_path, data={**config.data, "output": {"dir": "data"}})
-    monkeypatch.setattr("asm.pipeline.load_config", lambda *_: config)
+    monkeypatch.setattr("asm.pipeline.load_config", lambda *_, **_kwargs: config)
     first = run_pipeline(stages=["1", "3"], passive_only=True)
     second = run_pipeline(stages=["1", "3"], passive_only=True, resume=True)
     assert all(r["status"] == "completed" for r in first.values())

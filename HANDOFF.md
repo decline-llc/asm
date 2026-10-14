@@ -1,5 +1,9 @@
 # AI 接力入口
 
+最新批次（2026-10-12）已有工具流程接入与原 WSL 核对：见 `docs/TOOL_INTEGRATION.md`、`docs/WORKBENCH_CAPABILITIES.md`、`tools/README.md`。原 `Ubuntu`/WSL2 回环实跑通过；Amass/gau/waybackurls/LinkFinder/arjun/x8 为下一批。真实目标、报告与凭据不入库。
+
+页面与目录整理（2026-10-11）：见 `docs/PROJECT_ORGANIZATION.md`。18 份本机配置已按业务/测试分目录；15 个旧验收项目移出默认业务列表，记录、运行和原始证据保持。后续验收用 `Workbench(..., validation=True)` 写独立数据库。`?pilot=1` 已改为独立真实历史调查档案，项目中心支持卡片/列表/表格。验收结果在 `data/qa/project-organization/summary.json`，迁移备份与清单在 `data/organization/20261011_120716_724684/`。下列 Session 记录为此前工程背景。
+
 当前 Session 006（2026-10-10），本批实现 CSV 与独立 HTML 报告，并建立 `docs/reference/` 工具/引擎场景命令库。先读 `docs/WORKLOG.md`、`docs/ACCEPTANCE.md`、`docs/COVERAGE.md`、`docs/RUNBOOK.md`、`docs/OPERATIONS.md`、`docs/reference/README.md`，再对照原始 v2.0 设计。
 
 环境事实已更新：正式提权通道可执行 PowerShell Core 7.6.5；WSL2 Ubuntu 24.04.4 可用；项目 `.venv` 为 Windows Python 3.11.9。原 Session 001 的拒绝访问属于历史记录。命令必须显式使用 `pwsh.exe`，不要用 Windows PowerShell 5.1。

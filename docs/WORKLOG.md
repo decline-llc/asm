@@ -1,5 +1,22 @@
 # 实施记录
 
+## 2026-10-12 · 已有工具流程接入与原 WSL 核对
+
+- 用户范围：先完成已有工具，Amass/gau/waybackurls/LinkFinder/arjun/x8下一批。工具清单在tools/README.md，完整流程与验收在docs/TOOL_INTEGRATION.md。
+- 已有搜索引擎/被动来源继续独立步骤；新增OneForAll隔离live job、dnsx/dig、naabu/a_scan、httpx/ffuf/katana/gowitness/nuclei/wafw00f、SecLists冻结输入。多工具独立入队、tool_options参数、反馈、证据及双版报告沿用共享引擎。
+- 错误处置记录：受限进程WSL列表为空，被误判为本机没有WSL，新增独立Ubuntu-24.04并开始部署。正式权限核实原Ubuntu仍为默认发行版，用户longchuanli、/home/longchuanli/asm-ws及原工具/字典均在。已停止新增部署进程并终止Ubuntu-24.04；未注销任何发行版、未迁移原数据，后续直接复用Ubuntu。
+- Bridge、CLI、依赖检查、.env.example和脚本默认名称统一Ubuntu；显式环境配置优先，实际.env未读写。准备脚本只接受已存在发行版，空/不可见列表报错，永不自动安装或注销WSL；新增回归保护这一行为。a_scan任务副本部署到新results目录，原脚本哈希保持一致。
+- 原Ubuntu真实回环：native-tools-live-20261012-150726五项dig/dnsx、naabu/a_scan/Nmap均观察到夹具；external-tools-live-20261012-150458的httpx/ffuf/katana/wafw00f/nuclei通过。gowitness早期退出0却无PNG的误判已修复；gorod最终实跑external-tools-live-20261012-151602生成1280×720 PNG并视觉核对、进入双报告。chromedp本机隔离环境超时，默认使用gorod。自有验收进程/夹具均已结束。
+- 全单元回归317通过（tool-integration-unit-all-20261012.xml），最终相关回归90通过（original-wsl-final-20261012.xml），变更Python文件Ruff及前端构建通过。全仓Ruff另有既有frontend审查脚本的11项问题，未改动无关用户文件。此前失败证据保留，不冒充真实工具执行。
+- 未查询真实账户/目标，未读取秘密，未提交/推送。OneForAll新live job/公开提供商、Masscan实际网络接口及Nmap服务/UDP/NSE等外部验收仍单独待补，已安装与回环通过不等于这些项已验收。
+
+## 2026-10-11 · 项目分类与历史证据页面整理
+
+- 按用户澄清将业务调查与开发验收分开。18 份本机配置迁入 `profiles/investigations/`（2 份）及 `profiles/validation/`（16 份）；原数据库 15 个项目均为验收记录，在默认业务列表隐藏，测试入口保留。新配置与新交付按用途分目录，后续验收数据库独立于业务库。CLI 短配置名和 API 导入兼容分类路径。
+- 迁移前备份数据库并保存清单，迁移后验证 18 份配置内容哈希及运行/步骤/事件/资产/证据/receipt 等表的内容哈希一致。原始报告、证据包、路径引用、权限修订保持。备份与清单位于 `data/organization/20261011_120716_724684/`。
+- 项目中心提供卡片/列表/表格、搜索与排序；原顶部新建调查跳转问题已修复。历史证据 `?pilot=1` 脱离演示项目上下文，使用实际调查主体，提供候选/DNS/范围外/子域/台账分区、来源筛选、全文搜索、排序、分页、列表/表格、详情与原始记录、CSV 和原 HTML 导出。
+- 验证：26 项项目分类/API/运行/交付/证据包针对性测试通过，前端类型检查与生产构建通过，ruff 与 diff 检查通过。浏览器验证分类、三视图、迁移后历史运行打开、搜索/详情/分页/台账、8 行 7 列 CSV 与包含 2 张内嵌 PNG 的 HTML；浏览器无错误。截图和结果在 `data/qa/project-organization/`。6100 前端及 6400 后端已加载本次改动。
+
 ## 2026-10-09 · Session 001 · 启动与环境盘点
 
 - 输入：根目录 v2.0 工程设计、`asm_full_design_v2.html`、`deploy_topology_v2.html`；原始文件保留不改。

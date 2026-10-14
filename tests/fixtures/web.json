@@ -1,0 +1,16 @@
+{
+  "description": "Synthetic local fixture responses. Offline replay evidence only.",
+  "responses": [
+    {
+      "url": "http://127.0.0.1:8765",
+      "status": 200,
+      "headers": {"server": "ASM-Offline-Fixture"},
+      "body": "<!doctype html><html><head><title>Offline local fixture</title></head><body>Saved fixture page</body></html>"
+    },
+    {"url": "http://127.0.0.1:8765/asm-missing-*", "status": 404, "body": "Missing fixture page"},
+    {"url": "http://127.0.0.1:8765/admin", "status": 200, "body": "<title>Offline login fixture</title><input type='password'>"},
+    {"url": "http://127.0.0.1:8765/robots.txt", "status": 200, "body": "Disallow: /saved-private"},
+    {"url": "http://127.0.0.1:8765/saved-private", "status": 200, "body": "Saved path fixture"}
+  ],
+  "screenshots": {}
+}

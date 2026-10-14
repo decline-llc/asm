@@ -1,0 +1,32 @@
+// TypeScript data-level regressions, using the installed compiler without a test dependency.
+const fs = require('node:fs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const root = path.resolve(__dirname, '..');
+const ts = require(path.join(root, 'frontend/node_modules/typescript'));
+const out = path.join(root, 'data/qa/frontend-n1-n8');
+fs.mkdirSync(out, { recursive: true });
+const source = fs.readFileSync(path.join(root, 'frontend/src/data/dataset.ts'), 'utf8');
+const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+const modulePath = path.join(out, 'dataset-regression.mjs');
+fs.writeFileSync(modulePath, compiled);
+import(pathToFileURL(modulePath).href).then(d => {
+  const checks = {};
+  const check = (name, condition) => { checks[name] = Boolean(condition); };
+  const partial = d.tasks.find(t => t.id === 'RUN-20261009-01');
+  check('N3 failed stage keeps every later stage pending', partial.stages[6].status === 'failed' && partial.stages.slice(7).every(s => s.status === 'pending'));
+  check('N3 pending stage has no started/finished/result', partial.stages.slice(7).every(s => s.started === undefined && s.finished === undefined && s.resultCount === undefined));
+  check('N5 all stage timestamps parse', d.tasks.every(t => t.stages.every(s => [s.started, s.finished].every(v => v === undefined || Number.isFinite(Date.parse(v))))));
+  check('N5 finished timestamps follow start', d.tasks.every(t => t.stages.every(s => s.finished === undefined || Date.parse(s.finished) >= Date.parse(s.started))));
+  const diff = d.diffNewAssetKeys(d.snapshots);
+  check('N4 snapshot exposes two additions', diff.added.length === 2);
+  check('N4 removed oa asset remains disclosed', diff.removed.includes('oa.example.com|443|tcp'));
+  check('N4 no snapshots have empty both directions', JSON.stringify(d.diffNewAssetKeys([])) === JSON.stringify({ added: [], removed: [] }));
+  check('N8 confidence helper accepts A/B', d.isTrustedConfidence('A') && d.isTrustedConfidence('B'));
+  check('N8 C requires two distinct sources', !d.isTrustedConfidence('C') && !d.isTrustedConfidence('C', ['FOFA', 'FOFA']) && d.isTrustedConfidence('C', ['FOFA', 'Quake']));
+  check('N8 D/D+/E/F remain isolated', ['D', 'D+', 'E', 'F'].every(c => !d.isTrustedConfidence(c, ['one', 'two'])));
+  check('N8 asset wrapper shares helper', d.assets.every(a => d.isTrustedAsset(a) === d.isTrustedConfidence(a.confidence, a.sources)));
+  fs.writeFileSync(path.join(out, 'data-results.json'), JSON.stringify({ checked_at: new Date().toISOString(), checks, diff }, null, 2));
+  for (const [name, passed] of Object.entries(checks)) console.log(`${passed ? 'PASS' : 'FAIL'} ${name}`);
+  if (Object.values(checks).some(passed => !passed)) process.exitCode = 1;
+}).catch(error => { console.error(error); process.exitCode = 1; });

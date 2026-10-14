@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from .utils.dns import DNSSettings
 from .utils.oneforall import OneForAllSettings
+from .policy import ExecutionPolicy, configuration_hash, effective_config, redacted_snapshot
 
 
 @dataclass(frozen=True)
@@ -28,19 +29,35 @@ class Config:
         return (self.root / self.data.get("output", {}).get("dir", "data") / self.name).resolve()
 
     def fingerprint(self, passive_only=False, target_local=False):
-        payload = {"config": self.data, "passive_only": passive_only, "target_local": target_local}
+        payload = {"config": self.snapshot(), "passive_only": passive_only, "target_local": target_local}
         digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:20]
         return f"{self.name}:{digest}"
 
+    def snapshot(self):
+        return redacted_snapshot(self.data)
 
-def load_config(profile="default", root=None):
+    def policy(self, **kwargs):
+        return ExecutionPolicy(self.data, **kwargs)
+
+
+def load_config(profile="default", root=None, *, load_secrets=False):
     root = Path(root or Path.cwd()).resolve()
     path = Path(profile)
     if not path.is_file():
         path = root / "profiles" / f"{profile}.yaml"
+        if not path.is_file():
+            from .project_catalog import PURPOSE_DIRECTORIES
+            matches = [root / "profiles" / directory / f"{profile}.yaml"
+                       for directory in PURPOSE_DIRECTORIES.values()
+                       if (root / "profiles" / directory / f"{profile}.yaml").is_file()]
+            if len(matches) == 1:
+                path = matches[0]
+            elif len(matches) > 1:
+                raise ValueError("Ambiguous profile name; use the full configuration path")
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("Profile must be a mapping")
+    data = effective_config(data, root / "profiles" / "modes.yaml")
     if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", str(data.get("profile", ""))):
         raise ValueError("profile must be a simple project identifier")
     if type(data.get("authorization", False)) is not bool:
@@ -73,5 +90,9 @@ def load_config(profile="default", root=None):
                    "windows_verify": dns_settings.windows_verify, "reject_fake_ip": dns_settings.reject_fake_ip,
                    "takeover_probe": dns_settings.takeover_probe}
     data["oneforall"] = OneForAllSettings.from_config(data).as_config()
-    load_dotenv(root / ".env", override=False)
+    if data.get("schema_version") == 2:
+        data.pop("effective_config_hash", None)
+        data["effective_config_hash"] = configuration_hash(data)
+    if load_secrets and data.get("execution", {}).get("source", "live") != "replay":
+        load_dotenv(root / ".env", override=False)
     return Config(data, path.resolve(), root)

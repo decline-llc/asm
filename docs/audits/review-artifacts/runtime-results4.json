@@ -1,0 +1,55 @@
+{
+  "kb_search_overview": {
+    "drawer": 0,
+    "breadcrumb": "项目概览\n/\nlab.example.com:443"
+  },
+  "kb_search_tasks": {
+    "drawer": 0,
+    "breadcrumb": "调查任务\n/\nlab.example.com:443"
+  },
+  "kb_search_sources": {
+    "drawer": 0,
+    "breadcrumb": "数据来源\n/\nlab.example.com:443"
+  },
+  "kb_search_assets": {
+    "drawer": 0,
+    "breadcrumb": "资产探索\n/\nlab.example.com:443"
+  },
+  "errors_after_kb": [],
+  "malformed_crash": {
+    "stat_cards": 0,
+    "errors": [
+      "console.error: TypeError: Cannot read properties of undefined (reading 'filter')\n    at http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:111581\n    at Array.map (<anonymous>)\n    at Bp (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:110997)\n    at Hi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:38:16968)\n    at Dc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:43867)\n    at Ic (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39648)\n    at ip (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39576)\n    at yl (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39430)\n    at oi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:35817)\n    at Tc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:34768)",
+      "PAGEERROR: Cannot read properties of undefined (reading 'filter')"
+    ]
+  },
+  "malformed_persists": true,
+  "mobile_table_overflow": [
+    889,
+    429
+  ],
+  "mobile_sidebar_pos": [
+    765,
+    79
+  ],
+  "mobile_drawer_width": "390px",
+  "graph_nodes_edges": [
+    26,
+    24
+  ],
+  "graph_focus_card": 1,
+  "graph_dblclick_drawer": 1,
+  "ls_after_reset": null,
+  "stats_after_reset": [
+    "19",
+    "14",
+    "12",
+    "7"
+  ],
+  "page_errors": [
+    "console.error: TypeError: Cannot read properties of undefined (reading 'filter')\n    at http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:111581\n    at Array.map (<anonymous>)\n    at Bp (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:110997)\n    at Hi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:38:16968)\n    at Dc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:43867)\n    at Ic (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39648)\n    at ip (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39576)\n    at yl (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39430)\n    at oi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:35817)\n    at Tc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:34768)",
+    "PAGEERROR: Cannot read properties of undefined (reading 'filter')",
+    "console.error: TypeError: Cannot read properties of undefined (reading 'filter')\n    at http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:111581\n    at Array.map (<anonymous>)\n    at Bp (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:110997)\n    at Hi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:38:16968)\n    at Dc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:43867)\n    at Ic (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39648)\n    at ip (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39576)\n    at yl (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:39430)\n    at oi (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:35817)\n    at Tc (http://127.0.0.1:6271/assets/index-DLZb4_ht.js:40:34768)",
+    "PAGEERROR: Cannot read properties of undefined (reading 'filter')"
+  ]
+}

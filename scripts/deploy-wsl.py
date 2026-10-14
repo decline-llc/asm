@@ -39,7 +39,7 @@ def deploy(distro, user="", install=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--distro", default=os.getenv("WSL_DISTRO", "Ubuntu-22.04"))
+    parser.add_argument("--distro", default=os.getenv("WSL_DISTRO", "Ubuntu"))
     parser.add_argument("--user", default=os.getenv("WSL_USER", ""))
     parser.add_argument("--transfer-only", action="store_true")
     args = parser.parse_args()

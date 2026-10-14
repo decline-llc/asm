@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "synthetic_fixture",
+  "description": "Only the explicitly saved reserved/local targets match. Other targets are blocked, with no live fallback.",
+  "capabilities": {
+    "search": [
+      {"target": "example.invalid", "tool": "saved_search_fixture", "status": "completed", "observed_at": "2026-10-10T00:00:00Z", "assets": [{"name": "portal.example.invalid", "domain": "portal.example.invalid", "url": "https://portal.example.invalid", "sources": ["synthetic_fixture"], "verification_status": "candidate_only"}], "records": [{"category": "domains", "domain": "portal.example.invalid", "verification_status": "candidate_only", "source": "synthetic_fixture"}]}
+    ],
+    "dns_recursive": [
+      {"target": "example.invalid", "tool": "saved_dns_fixture", "status": "completed", "observed_at": "2026-10-10T00:00:00Z", "assets": [{"name": "example.invalid", "domain": "example.invalid", "ip": "192.0.2.10", "verification_status": "dns_only", "sources": ["synthetic_fixture"]}], "records": [{"category": "dns_observations", "domain": "example.invalid", "record_type": "A", "value": "192.0.2.10", "resolver": "fixture", "source": "synthetic_fixture"}]}
+    ],
+    "web_visit": [
+      {"target": "http://127.0.0.1:8765", "tool": "saved_http_fixture", "status": "completed", "observed_at": "2026-10-10T00:00:00Z", "assets": [{"name": "127.0.0.1", "ip": "127.0.0.1", "url": "http://127.0.0.1:8765", "http_status": 200, "title": "Synthetic saved fixture portal", "sources": ["synthetic_fixture"], "verification_status": "candidate_only"}], "records": [{"category": "web_endpoints", "url": "http://127.0.0.1:8765", "http_status": 200, "source": "synthetic_fixture"}]}
+    ]
+  }
+}

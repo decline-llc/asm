@@ -1,6 +1,6 @@
 # FOFA（网络空间测绘搜索）
 
-> 状态：**已自动调用**（Stage 4 域名收集 + p2 证书线索）；**带账户搜索尚未实网验收**
+> 状态：**已接入工具层**（Stage 4、p2 与 Workbench）；缓存、字段降级与受控分页已用 MockTransport 离线验收，带账户搜索未在本轮实网验收。
 > 版本/接口：`https://fofa.info/api/v1`（info/my + search/all）
 > 凭据：`.env` 的 `FOFA_EMAIL` + `FOFA_KEY`（**两者必须同时配置**；空则跳过）
 > 核对日期：2026-10-10（源码核对；官方 API 文档核对）
@@ -21,7 +21,8 @@ FOFA_KEY=<FOFA API Key>
 ```
 
 - 认证：每次请求带 `email` + `key` 查询参数（GET）。**异常时的错误 URL 可能含认证参数，分享前必须脱敏**。
-- 限速/配额（项目强制）：相邻请求间隔 **≥15 秒**、每项目每 UTC 日 **≤200 次**（含失败与账户信息调用）；`rates.fofa_min_interval` 不能 <15、`rates.fofa_daily` 不能 >200（见 [conf.py](../../asm/conf.py)）。p2 证书另有默认最多 8 次的账本限制。账本查看：`python -m asm quota --profile customer`（不发请求）。
+- 限速/配额：相邻请求间隔 **≥15 秒**、每 UTC 日 **≤200 次**（含失败、账户信息和 429 重试）；`rates.fofa_min_interval` 不能 <15、`rates.fofa_daily` 不能 >200（见 [conf.py](../../asm/conf.py)）。Workbench 按脱敏账户指纹使用共享 `data/account-rate-ledger.sqlite`，换项目或运行不清零；旧阶段保留旧项目账本。p2 证书另有默认最多 8 次的账本限制。账本查看不发请求。
+- 账户信息默认启用，同一进程、同一账户 10 分钟内只请求一次；失败也缓存且不阻断搜索。`check_account=False` 可跳过它，但搜索请求仍须认证并经过限速/额度账本。
 - **不能把 PAT/其它引擎 key 填入 FOFA 变量**；为空自动跳过，不会变成公共免费 API。
 
 ## 3. 输入准备与场景命令
@@ -65,10 +66,28 @@ QUERY = Fofa.cert_query('批准的完整组织名', organization=True)        # 
 
 ## 4. 接口、分页与额度
 
-- 流程：先 `GET /api/v1/info/my`（账户校验），再循环 `GET /api/v1/search/all`。
-- 参数：`qbase64`（base64 编码的查询）、`page`（从 1 起）、`size=50`、`fields=host,ip,port,protocol,title,domain,server`。
-- 翻页：默认最多 `max_pages`（当前 20），但当页结果数 <50 时停止；**受本地请求限额与账户能力约束**，不要把一页当全部结果。
-- 响应：JSON；`error` 非空即拒绝；`results` 为数组（每项与 `fields` 对应的数组或对象）。
+- 流程：可选并缓存的 `GET /api/v1/info/my`，再循环 `GET /api/v1/search/all`。账户信息失败记录降级，搜索仍可继续；账户硬额度耗尽则不发送后续请求。
+- 参数：`qbase64`、`page`（从 1 起）、`size`（默认 50，项目实现允许 1–1000）、`fields`（默认 `host,ip,port,protocol,title,domain,server`）。`fields` 支持字符串或列表，未知输出字段、空字段和缺少 host/domain/ip 的组合在发送前拒绝。
+- 翻页：`max_pages` 默认 20，允许 1–200；Workbench 的项目计划通常更小。短页结束；页数、请求预算或账户额度到达上限时停止，并在 `panel.health` 标记 `truncated` 与原因。响应总量 `size/total` 只作为估计，不能把已收到一页说成已拉全。
+- `max_requests` 为单次查询的物理请求预算（1–200），包含账户信息、429 重试和显式字段回退；默认 `min(200, max_pages + 1)`。每次物理请求仍经过持久限速器，查询预算不能绕过账户日限额。
+- 响应 `error:true` 记录到 `panel.last_errors` 与 `panel.health.errors`，保留错误码和脱敏 `errmsg`，返回已得到的部分结果；如 `[820000]` 不被改写成成功空结果。可选 `fallback_fields=True` 仅把输出字段回退为基础字段，保留原失败并消耗相同预算，不改动查询字符串或账户权限。
+
+### 4.1 拉全前的计划与停止纪律
+
+先保存查询、输出字段、每页大小、页数上限、请求预算和本地账本剩余额度，再决定是否允许翻页。以 170/239/257 条等历史总量估计计划，不能为了凑总量追加请求。分页中的中断、429、字段拒绝和额度耗尽均须保留已有证据，报告如实标记覆盖不足。
+
+```python
+# 离线测试中的调用契约示例；本轮没有执行真实账户分页。
+observations = list(panel.search(
+    QUERY, size=50, max_pages=3, max_requests=4,
+    fields=["host", "ip", "port", "protocol", "title", "domain", "server"],
+    check_account=True, fallback_fields=False,
+))
+coverage = panel.health
+errors = panel.last_errors
+```
+
+`truncated=False` 也不能独立证明互联网资产全集已覆盖；需结合保存的查询范围、数据源时间、总量估计和未采集能力说明。缓存保存脱敏账户指纹及健康摘要，不保存原始凭据。API 错误文本和返回字段在进入 Workbench 调用记录前移除认证值。
 
 ## 5. 输出格式与解析
 
@@ -108,4 +127,5 @@ QUERY = Fofa.cert_query('批准的完整组织名', organization=True)        # 
 
 - 官方文档核对：[FOFA API](https://fofa.info/api)；端点与 `fields`/`qbase64` 用法与官方一致。
 - 本机证据：[asm/panel/fofa.py](../../asm/panel/fofa.py)、[asm/panel/base.py](../../asm/panel/base.py)（RateLimiter：fofa min_interval≥15、daily≤200）、[asm/conf.py](../../asm/conf.py)（限额校验）；离线解析测试 `tests/unit/test_panel.py`。
-- 待验证：带账户的真实搜索验收、翻页完整性与配额在实网的行为。
+- 本轮离线证据：`tests/unit/test_fofa_workbench.py` 验证同账户缓存/过期、账户失败仍搜索、字段验证与显式回退、820000 脱敏、分页截断、物理重试预算和账本不重置。执行日志为 `data/validation/fofa-workbench.xml`；MockTransport 不代表已完成真实账户搜索验收。
+- 待验证：获准范围内的账户字段能力、真实分页完整性与服务端额度行为；本轮没有实网调用或读取现有 `.env`。

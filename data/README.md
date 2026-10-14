@@ -4,4 +4,6 @@
 
 `--dry-run` 写入 `<profile>/dry-run/`，绝不污染实际项目数据库。`data/validation/` 保存本机验收输出。
 
+Workbench 业务状态在 `workbench.sqlite`；后续验收使用 `validation/workbench.sqlite`。项目目录整理备份与配置迁移清单在 `organization/<时间戳>/`，历史运行与证据引用保留。详见 `docs/PROJECT_ORGANIZATION.md`。
+
 此目录除 README 外全部被 Git 忽略。WSL 原始结果保留在 `~/asm-ws/results/<jobid>/`，跨边界只用管道与 tar，不使用 `/mnt` 或 UNC 数据通道。

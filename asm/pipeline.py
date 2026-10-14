@@ -7,6 +7,7 @@ from .bridge import Bridge, JobManager
 from .conf import load_config
 from .db import Database
 from .models import utcnow
+from .offline import OfflineBridge, OfflineJobs
 from .scope import Scope, ScopeError
 
 STAGES = {
@@ -52,7 +53,10 @@ class StageContext:
 
 def run_pipeline(profile="default", stages=None, *, root=None, passive_only=False,
                  target_local=False, dry_run=False, resume=False, on_result=None):
-    config = load_config(profile, root)
+    config = load_config(profile, root, load_secrets=not dry_run)
+    dry_run = dry_run or config.data.get("execution", {}).get("source") == "replay"
+    if config.data.get("schema_version") == 2 and not dry_run:
+        raise ScopeError("Schema 2 live profiles require the per-capability workbench-run executor")
     scope = Scope(config.data, passive_only=passive_only, target_local=target_local)
     explicit = stages is not None
     stages = list(stages or STAGES)
@@ -67,9 +71,9 @@ def run_pipeline(profile="default", stages=None, *, root=None, passive_only=Fals
     fingerprint = config.fingerprint(passive_only, target_local) + (":dry-run" if dry_run else "")
     result = {}
     with Database(output / "asm.db") as db:
-        bridge = Bridge()
-        jobs = JobManager(bridge, db, output)
-        if resume and db.rows("SELECT 1 FROM jobs WHERE status='running'"):
+        bridge = OfflineBridge() if dry_run else Bridge()
+        jobs = OfflineJobs() if dry_run else JobManager(bridge, db, output)
+        if resume and not dry_run and db.rows("SELECT 1 FROM jobs WHERE status='running'"):
             jobs.recover()
             jobs.wait_all(max_seconds=1)
         for stage in stages:

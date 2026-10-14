@@ -66,13 +66,14 @@ class MappingEngine:
             min_interval=rates.get(self.name + "_min_interval", 1),
             daily=int(rates.get(self.name + "_daily", 200)))
         self.client = client or httpx.Client(timeout=30, follow_redirects=False)
+        self.sleeper = getattr(self.limiter, "sleeper", time.sleep)
 
     def request(self, method, url, **kwargs):
         for attempt in range(2):
             self.limiter.acquire()
             reply = self.client.request(method, url, **kwargs)
             if reply.status_code == 429 and attempt == 0:
-                time.sleep(min(60, max(1, float(reply.headers.get("Retry-After", 5)))))
+                self.sleeper(min(60, max(1, float(reply.headers.get("Retry-After", 5)))))
                 continue
             reply.raise_for_status()
             return reply.json()
