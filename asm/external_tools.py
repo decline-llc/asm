@@ -264,6 +264,21 @@ def crawl_scope(target):
     return "^" + re.escape(parsed.scheme + "://" + parsed.netloc) + r"(?:/|$)"
 
 
+def js_crawl_enabled(params):
+    """katana endpoint parsing inside JavaScript: built-in parser only, opt-out.
+
+    The built-in parser adds GET-only observations that remain under the exact crawl
+    scope and the brokered per-request policy. jsluice needs a third-party binary this
+    bounded adapter does not ship, so asking for it is refused instead of downgraded.
+    """
+    if params.get("jsluice"):
+        raise ValueError("jsluice JS parsing needs an external binary this bounded adapter does not provide")
+    value = params.get("js_crawl", True)
+    if not isinstance(value, bool):
+        raise ValueError("js_crawl must be a boolean")
+    return value
+
+
 def broker_request(ctx, frame, requests, errors):
     """Relay one tool-generated request through the current policy and ledger.
 
@@ -375,8 +390,10 @@ def http_tool(ctx):
         raise ValueError("Invalid HTTP tool timeout/rate")
     if tool == "katana":
         ctx.params["max_requests_per_host"] = min(int(ctx.params.get("max_requests_per_host", 200)), int(ctx.params.get("max_urls_per_host", 200)))
+        js_crawl = js_crawl_enabled(ctx.params)
     else:
         ctx.params.setdefault("max_requests_per_host", 1000)
+        js_crawl = False
     if tool == "wafw00f" and "waf_fingerprint" not in ctx.params.get("approved_checks", []):
         return _result(ctx, status="skipped", reason="waf_fingerprint_check_not_selected")
     files = {"urls.txt": ctx.target + "\n"}
@@ -397,7 +414,7 @@ def http_tool(ctx):
     spec = {"tool": tool, "target": ctx.target, "host": parsed.hostname, "rate": max(1, math.floor(rate)), "timeout": timeout,
             "job_timeout": int(ctx.params.get("host_timeout_seconds", 180)), "depth": int(ctx.params.get("max_depth", 2)),
             "max_requests_per_host": ctx.params["max_requests_per_host"],
-            "crawl_scope": crawl_scope(ctx.target), "templates": [n for n in files if n.startswith("template-")]}
+            "crawl_scope": crawl_scope(ctx.target), "js_crawl": js_crawl, "templates": [n for n in files if n.startswith("template-")]}
     if tool == "gowitness":
         spec["driver"] = ctx.params.get("driver", "gorod")
         if spec["driver"] not in {"chromedp", "gorod"}:

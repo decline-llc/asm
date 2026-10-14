@@ -1,6 +1,6 @@
 # dnsx（DNS 记录探测）
 
-> 状态：**已自动调用**（Stage 5，按每个配置上游独立运行）
+> 状态：**已接入 Stage 5**（按每个配置上游独立运行）
 > 版本：1.3.1（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/dnsx`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/dnsx.txt`；回环实测：本地多解析商 fixture 通过，见 ACCEPTANCE）
@@ -11,7 +11,7 @@
 - **用途**：对域名列表批量查询 A/AAAA/MX/NS/CNAME 等记录，作为 dig 之外的第二个解析观测来源。
 - **适用场景**：Stage 5 多上游 DNS 观测、按解析商保留差异、生成 selected 可用地址的输入之一。
 - **局限**：只做解析，不做端口/服务判定；**结果可信性取决于上游**——历史上本机显式公共上游（1.1.1.1/114.114.114.114/8.8.8.8 的 UDP/TCP 53）曾把 `example.com` 返回为 fake-IP `198.18.0.122`（2026-10-10 观测，需复测，非永久结论）。dnsx 本身不识别 fake-IP，过滤在 Stage 5 `record_value(reject_fake_ip=True)`。`-wd` 通配符模式会忽略其它部分 flag，应单独运行。
-- **接入状态**：Stage 5 对每个 `dns.resolvers` 上游分别后台调用一次；人工原生 JSONL 不自动入库。
+- **接入状态**：**已接入**：Stage 5 对每个 `dns.resolvers` 上游分别后台调用一次；配置 `dns.doh_resolvers` 时加密来源优先成为 selected 并留下 `doh_verification`；人工原生 JSONL 仍需另写导入。
 
 ## 2. 实际接入状态与解析优先级
 
@@ -88,4 +88,4 @@ JSONL 逐行一个对象。关键字段：`host`（查询名）、各记录类�
 
 - 官方仓库核对：[projectdiscovery/dnsx](https://github.com/projectdiscovery/dnsx)；版本 1.3.1 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`dnsx -h` 原文 `data/validation/reference-help/dnsx.txt`；调度参数见 [s5_dns_cdn.py](../../asm/stages/s5_dns_cdn.py)；多解析商离线证据 `data/validation/dns/multi-resolver/`。
-- 待验证：可信解析路径建立后的实网多上游一致性；DoH 适配器（当前 `dns.resolvers` 只接受 IP/IP:port，不支持 DoH URL）。
+- 待验证：自有授权域名上的实网多上游一致性；DoH 端点在其它网络的可用性矩阵。

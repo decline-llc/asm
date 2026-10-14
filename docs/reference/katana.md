@@ -1,6 +1,6 @@
 # katana（Web 爬虫）
 
-> 状态：**仅安装，未接入 Stage 7**
+> 状态：**已接入 Stage 7（`web_crawl` 选择 katana 时经隔离 broker 执行）**
 > 版本：1.8.0（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/katana`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/katana.txt`、`web-tool-help/katana.txt`）
@@ -11,11 +11,11 @@
 - **用途**：爬取目标站点的 URL、JS 端点、表单等线索。
 - **适用场景**：对批准的 Web 目标做链接/端点发现；配合精确 scope 做有界爬取。
 - **局限**：**默认 `-fs rdn`**（按注册域判定范围）且**默认跟随重定向**——这两者都不能直接当作项目边界；接入必须显式 `-cs`（精确 crawl-scope 正则）、`-dr`（关跳转）、`-duc`。普通爬取**不等于浏览器执行**（动态页面需 headless，但 headless 的每请求范围控制尚待实现）。`-kb-validate-secrets` 会向提供商发验证请求，**禁止启用**。
-- **接入状态**：已安装、未接入 Stage 7；未来自动接入须先用回环夹具证明“越界请求零到达”。原生 JSONL 不自动入库。
+- **接入状态**：**已接入** `web_crawl`：选择 katana 时由 `external_tools.http_tool()` 在私有 network namespace 里执行，每个请求经 broker 交回 `ExecutionContext.http`（精确 `-cs` scope + `-dr` + `-duc` + 限速），越界主机 403 且无传输。**JS 端点解析（`-jc`）默认开启**，可用 `tool_options.katana.js_crawl: false` 关闭；`jsluice`（`-jsl`）需要外部二进制，本适配器不提供，显式请求会被拒绝而不是静默降级。原生 JSONL 由适配器解析：范围内且被 broker 实际请求过的 URL 入 `assets`/`records`，工具上报但 broker 未请求的 URL 只作 `out_of_scope_leads`。
 
 ## 2. 实际接入状态
 
-无自动调度。`-cs` 正则必须与目标 URL 同步改成**精确批准主机**，不能保留占位正则。`-dr` 是显式关闭跳转（官方默认跟随）。`-or`/`-ob` 用于减少原始请求/响应正文的存储，需要正文证据时另行选择并脱敏。
+自动调度由适配器完成（`web_crawl` 且 `selected_tools` 含 katana）。`-cs` 正则由 `external_tools.crawl_scope()` 按目标 URL 生成**精确批准主机**正则，不接受近似域名/其它端口/其它协议。`-dr` 是显式关闭跳转（官方默认跟随）。`-or`/`-ob` 用于减少原始请求/响应正文的存储，需要正文证据时另行选择并脱敏。
 
 ## 3. 输入准备与场景命令
 
@@ -53,7 +53,7 @@ JSONL 逐行对象，关键字段：`request.endpoint`（或顶层 `url`，随�
 ## 5. 结果衔接与入库
 
 - 衔接：范围内 URL/端点 → httpx 存活复核 → ffuf 路径补充 → （必要时）gowitness 截图。
-- 入库：**当前不自动入库**；接入需证明范围控制有效。
+- 入库：适配器解析 JSONL 后，范围内且被 broker 实际请求过的 URL 入 `assets`/`records`，并保留 JSONL/argv/rc 作为证据；工具上报但 broker 未请求的 URL 记为 `out_of_scope_leads`，不作为资产。
 - 越界 URL 一律丢弃；`-do`（显示范围外）仅用于核对 scope 是否过宽，不作为采集结果。
 
 ## 6. 去重、来源与复核
@@ -78,4 +78,4 @@ JSONL 逐行对象，关键字段：`request.endpoint`（或顶层 `url`，随�
 
 - 官方仓库核对：[projectdiscovery/katana](https://github.com/projectdiscovery/katana)；版本 1.8.0 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`katana -h` 原文 `data/validation/reference-help/katana.txt` 与 `data/validation/web-tool-help/katana.txt`。
-- 待验证：接入前的“越界请求零到达”回环证明；headless 模式的每请求范围控制；与 Stage 7 Windows httpx 的结果对照。
+- 待验证：真实 WSL 工具实跑与更广 HTTPS 浏览器路径；headless（`-hl`）模式的每请求范围控制；与 Stage 7 Windows httpx 的结果对照。“越界请求零到达”已由 `tests/unit/test_broker_scope.py` 回环证明（Session 009）。

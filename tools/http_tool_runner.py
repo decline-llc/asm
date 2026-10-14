@@ -102,7 +102,12 @@ def command(spec, proxy):
     if tool == "ffuf":
         return [tool, "-u", target.rstrip("/") + "/FUZZ", "-w", "dictionary.txt", "-mc", "all", "-rate", rate, "-t", "1", "-timeout", timeout, "-x", proxy, "-of", "json", "-o", "result.json", "-noninteractive", "-k"]
     if tool == "katana":
-        return [tool, "-u", target, "-cs", spec["crawl_scope"], "-dr", "-duc", "-j", "-silent", "-d", str(spec["depth"]), "-rl", rate, "-c", "1", "-p", "1", "-timeout", timeout, "-proxy", proxy]
+        args = [tool, "-u", target, "-cs", spec["crawl_scope"], "-dr", "-duc", "-j", "-silent", "-d", str(spec["depth"]), "-rl", rate, "-c", "1", "-p", "1", "-timeout", timeout, "-proxy", proxy]
+        if spec.get("js_crawl"):
+            # Endpoint parsing inside crawled JavaScript files, still under the exact
+            # crawl scope and the same brokered per-request policy and budget.
+            args.append("-jc")
+        return args
     if tool == "wafw00f":
         return [tool, "-r", "-p", proxy, "-T", timeout, "-f", "json", "-o", "result.json", target]
     if tool == "nuclei":

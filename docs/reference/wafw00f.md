@@ -1,6 +1,6 @@
 # wafw00f（WAF 指纹识别）
 
-> 状态：**仅安装，未自动调度**
+> 状态：**已接入 Stage 7**（`vulnerability_check` 且显式选 `waf_fingerprint` 时经隔离 broker 执行）
 > 版本：2.4.2（固定）
 > 位置：WSL `~/asm-ws/tools/wafw00f/.venv/bin/wafw00f`（独立 venv）
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/tool-help/wafw00f.txt`）
@@ -11,11 +11,11 @@
 - **用途**：识别目标站点前置的 WAF（Web 应用防火墙）指纹。
 - **适用场景**：解释 `403/502` 等异常状态、过滤行为是否可能来自 WAF。
 - **局限**：WAF 指纹是**辅助线索**，不证明漏洞、组织归属或 CDN 源站 IP；**没检测到不代表无 WAF**（可能只是没命中指纹库）。**`-r` 在本工具表示“不跟随重定向”**，与 ffuf 的 `-r`（跟随）含义相反——不同工具参数不能只按同名字母套用。
-- **接入状态**：已安装、未自动调度；原生 JSON 不自动入库。
+- **接入状态**：**已接入**：须在 `approved_checks` 显式选 `waf_fingerprint`（否则预检直接 blocked）；独立 venv 中的 `wafw00f` 经 broker 执行，JSON 结果以 `waf_fingerprint` 候选入 findings。
 
 ## 2. 实际接入状态
 
-无自动调度。独立 venv 安装，PATH 需含 `~/asm-ws/tools/wafw00f/.venv/bin`（索引的通用 export 已含）。
+自动调度由适配器完成（`vulnerability_check` 选到 wafw00f 时）。独立 venv 安装，PATH 需含 `~/asm-ws/tools/wafw00f/.venv/bin`（索引的通用 export 已含）。
 
 ## 3. 输入准备与场景命令
 
@@ -51,7 +51,7 @@ JSON（`-o *.json` 或 `-f json`）是数组，元素含 `url`、`detected`、`f
 ## 5. 结果衔接与入库
 
 - 衔接：WAF 指纹用于解释 httpx/ffuf 的 403/502、过滤行为；辅助判断 CDN/WAF 前置。
-- 入库：**不自动入库**；作为人工分析线索。
+- 入库：命中以 `waf_fingerprint` 候选入 findings（review 状态）；未命中记 `web_observations`。
 
 ## 6. 去重、来源与复核
 

@@ -1,5 +1,15 @@
 # 实施记录
 
+## 2026-10-14 · Session 010 · katana JS 端点爬取面、工具版本矩阵，以及一轮文档债清理
+
+- 用户指令「继续」。按 A 方向（可离线验收、不产生实网流量）推进 Web 阶段剩余缺口，并顺手处理了核实过程中暴露的大面积文档过期问题。
+- **1) katana JS 端点爬取面（COVERAGE 的「JS 端点」缺口）**：新增 `external_tools.js_crawl_enabled()`——默认开启、`tool_options.katana.js_crawl: false` 可显式关闭、`jsluice` 请求**明确拒绝**（需要本适配器不提供的第三方二进制）、非布尔值报错；`tools/http_tool_runner.py` 只按 `spec["js_crawl"]` 追加 `-jc`，unset 时**不**默认开启，避免 WSL 侧自行发明策略。JS 解析仍在精确 `-cs` scope、`-dr`、`-duc`、限速与 broker 每请求范围/预算/回执之内。默认开启的理由写在 TOOL_INTEGRATION：适配器只允许有界 GET/HEAD，且每个请求都过同一治理路径。
+- **2) 工具版本矩阵（此前只存在于被 Git 忽略的证据里）**：新增 `docs/reference/tool-versions.md`，把「版本 + 集成状态 + 接入位置 + 证据」收敛为一份可核对的矩阵，二进制版本以 `tools/tool-lock.json` 为唯一来源；新增 `tests/unit/test_tool_reference_docs.py` **4 项**强制：矩阵版本必须与 tool-lock 一致、集成状态必须取自受控词表、`external_tools.SUPPORTED` 里的每个工具都必须在矩阵中出现且不得标为「未接入」、每个已接入工具的 reference 页不得再出现过期的接入断言且必须正面写明「已接入」。
+- **3) 文档债清理（本批主要工作量）**：按代码核实，参考文档与 `docs/OPERATIONS.md` 的工具总表长期把**已经接入**的工具写成「仅安装 / 未接入 / 不自动入库」。本批修正 10 个已接入工具的 reference 页（a_scan、dig、dnsx、ffuf、gowitness、httpx、katana、naabu、nuclei、wafw00f）、gowitness 的运行时页 chrome、`docs/OPERATIONS.md` 工具表 9 行、`docs/reference/README.md` 与 `docs/ACCEPTANCE.md` 的历史结论行；并借机把 Session 008 已完成的可信解析路径回写到 dig/dnsx 的接入状态与「待验证」。这不是纯文风改动：旧文字会让下一轮误判能力边界（HANDOFF 上一批就因此把已实现的 gowitness 范围约束当成待实现）。
+- **4) 明确留待**：`frontend/src/data/dataset.ts` 的能力徽章仍按旧文档把 naabu/WSL httpx/gowitness 标为「未接入主流程」（`docs/audits/` 里的历史审阅报告也基于当时事实），需要单独一轮前端批次修改并重新构建、跑前端检查；`docs/audits/*` 属历史审阅记录，不追改；`docs/SOURCES.md` 里的是 Google DoH **JSON API**（与本次实现的 RFC 8484 线格式 DoH 不是同一入口），未混改。
+- 验证：`ruff check --no-cache asm tests tools scripts` 全绿；新增 3 项 katana/范围测试 + 4 项文档矩阵测试全通过；完整非 WSL 回归见 `docs/ACCEPTANCE.md` 本批行。证据 `report/validation/web-surface-docs-unit.xml`。
+- 边界：未改系统 DNS/代理/防火墙；未对任何真实目标发包（全部离线替身 + 127.0.0.1 回环夹具）；未开启真实 WSL 工具实跑（受限沙箱下子进程管道与浏览器启动被拒）；版本矩阵只记录既有事实，不把「已接入」等同于「已实网验收」。
+
 ## 2026-10-14 · Session 009 · WSL Web 工具范围控制：核实、加固与契约测试
 
 - 用户指令「继续推进」。按 COVERAGE/HANDOFF 的下一优先级处理 Web 阶段 WSL 工具范围控制。**先以代码为准核实**：接力文档称 httpx/ffuf/katana/gowitness 已接入，而 HANDOFF 仍写「gowitness 浏览器子资源/导航的范围约束尚待实现」。读码结论是**约束已实现、HANDOFF 该句已过时**：katana 传 `-cs <精确 scope> -dr -duc`，gowitness 经 `--chrome-path chrome-wrapper.py`（`--no-sandbox` 仅在私有 user/netns）与 `--chrome-proxy <任务内代理>` 且 Chrome 只信任本任务代理证书的固定 SPKI，代理把每个 GET/HEAD 交回 Windows。

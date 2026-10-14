@@ -1,6 +1,6 @@
 # WSL Google Chrome（浏览器运行时）
 
-> 状态：**仅安装**（作为 gowitness 的浏览器运行时）；当前 ASM 截图主链用 Windows Playwright Chromium（见 [playwright.md](playwright.md)）
+> 状态：**gowitness 的浏览器运行时**（仅有 `screenshot` 选 gowitness 时由任务内 wrapper 启动）；默认截图链仍是 Windows Playwright Chromium（见 [playwright.md](playwright.md)）
 > 版本：155.0.8059.39
 > 位置：WSL `/usr/bin/google-chrome`
 > 核对日期：2026-10-10（版本清单核对：WSL `manifests/installed.txt`）
@@ -11,7 +11,7 @@
 - **用途**：为 gowitness 提供真实浏览器内核；也可单独用 headless 模式做截图/DOM 导出核对。
 - **适用场景**：gowitness 截图运行时；人工对回环 fixture 的渲染核对。
 - **局限**：**单独 Chrome 命令不承担主流程的范围规则**——生产截图需要对导航和每个子资源请求限制范围。不要把 Windows 浏览器复制到 Linux。headless 截图/DOM 不自动进 ASM。
-- **接入状态**：已安装、未接入主流程；是 gowitness 的依赖，不是独立调度工具。
+- **接入状态**：**已接入**（作为 gowitness 的运行时）：由任务内 `chrome-wrapper.py` 以 `--no-sandbox`、`--proxy-bypass-list=<-loopback>` 和固定 SPKI 信任启动，导航与子资源请求全部经 broker 回到 `ExecutionContext.http`；它不是独立调度工具。
 
 ## 2. 实际接入状态
 
@@ -44,7 +44,7 @@ run_logged chrome-dom /usr/bin/google-chrome --headless --dump-dom http://127.0.
 ## 5. 结果衔接与入库
 
 - 衔接：作为 gowitness 内核；单独的 PNG/DOM 用于人工核对。
-- 入库：不自动入库；ASM 报告只内嵌 Playwright 已采集的 PNG。
+- 入库：不作为独立工具入库；它渲染出的 PNG 由 gowitness 适配器校验并登记。
 
 ## 6. 去重、来源与复核
 

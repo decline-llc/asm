@@ -1,6 +1,6 @@
 # nuclei（模板化漏洞/暴露检测）
 
-> 状态：**仅安装（二进制）**；模板集**未单独验收**，主流水线**不自动运行**漏洞模板
+> 状态：**已接入 Stage 7**（`vulnerability_check` 且显式提供仓库内批准模板时经隔离 broker 执行）；模板集仍需单独验收，不接受任意模板
 > 版本：3.11.1（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/nuclei`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/nuclei.txt`、`tool-help/nuclei.txt`）
@@ -11,11 +11,11 @@
 - **用途**：基于模板对目标做漏洞/暴露/错误配置探测。
 - **适用场景**：对**已选定并审阅过**的模板，在授权范围内做定点验证。
 - **局限**：安装二进制**不代表**模板集完整或规则已验收；**模板命中是待复核线索，不自动标成已确认漏洞**（可能来自统一返回页、过滤页或版本猜测）。不要把默认全模板集当成“已完成暴露面核验”。请求行为取决于模板本身——运行前必须阅读模板的实际请求与匹配条件。
-- **接入状态**：已安装、未接入；原生 JSONL 不自动入库。
+- **接入状态**：**已接入**：`vulnerability_check` 选择 nuclei 时必须先给出仓库内明确批准的 HTTP 观察模板（`approved_templates`），模板经校验（拒绝 raw 请求、其它协议类型与非 HTTP 段）后经 broker 执行；命中只作 review 候选。
 
 ## 2. 实际接入状态
 
-无自动调度。本项目当前不自动执行模板。模板文件需自行准备（`-t` 路径是占位符），并先 `-validate` 校验。`-dr` 关闭 HTTP 模板跳转、`-ni` 排除 OAST 外带交互——这是本项目的默认收敛要求，但具体请求仍以模板为准。
+自动调度由适配器完成，但**只执行显式批准的模板文件**：未配置批准模板时该能力被预检挡下（`approved_http_templates_required`），不会退回默认整库模板。`-dr` 关闭 HTTP 模板跳转、`-ni` 排除 OAST 外带交互——这是本项目的默认收敛要求，但具体请求仍以模板为准。
 
 ## 3. 输入准备与场景命令
 
@@ -55,7 +55,7 @@ JSONL 逐行一个命中对象，常见字段：`template-id`、`info`（name/se
 ## 5. 结果衔接与入库
 
 - 衔接：确认后的命中 → review/人工判定 → 必要时进入 findings。
-- 入库：**不自动入库**；命中不自动成为漏洞。
+- 入库：命中以 review 候选（`template_candidate`）入 findings；**不自动成为已确认漏洞**。
 - 与 ffuf 的统一返回页基线、httpx 的状态/长度联合复核，排除误报。
 
 ## 6. 去重、来源与复核
@@ -80,4 +80,4 @@ JSONL 逐行一个命中对象，常见字段：`template-id`、`info`（name/se
 
 - 官方仓库核对：[projectdiscovery/nuclei](https://github.com/projectdiscovery/nuclei) 与模板库 [nuclei-templates](https://github.com/projectdiscovery/nuclei-templates)；版本 3.11.1 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`nuclei -h` 原文 `data/validation/reference-help/nuclei.txt` 与 `data/validation/tool-help/nuclei.txt`。
-- 待验证：模板集的版本固定与验收；命中判定的误报基线；是否/如何以受控方式纳入 review 流程。
+- 待验证：批准模板集的版本固定与验收；命中判定的误报基线；真实 WSL 工具实跑。

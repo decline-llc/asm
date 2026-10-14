@@ -1,6 +1,6 @@
 # ffuf（Web 路径/内容爆破）
 
-> 状态：**仅安装，未接入 Stage 7**
+> 状态：**已接入 Stage 7（`web_path_enum` 选择 ffuf 时经隔离 broker 执行）**
 > 版本：2.3.0（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/ffuf`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/ffuf.txt`、`web-tool-help/ffuf.txt`）
@@ -11,11 +11,11 @@
 - **用途**：用字典对目标做路径/参数/虚拟主机等模糊测试，发现隐藏端点。
 - **适用场景**：对批准的 Web 目标做目录/文件爆破、统一返回页（catch-all）识别后的差异筛选。
 - **局限**：**输入字典是候选集合，不是资产事实**；命中需排除统一返回页（catch-all）再人工复核。**默认不跟随重定向**（`-r` 需显式开）。`-ac` 自动校准不能代替原始记录与人工判断；过滤条件过宽会漏真实页面。`502` 单独只作候选（项目记为 `backend_filtered_candidate`）。
-- **接入状态**：已安装、未接入 Stage 7；原生 JSON 不自动入库。框架 Stage 7 路径探测用 Windows httpx 库（速率由 `rates.ffuf_tps` 控制），与这里的二进制是两回事。
+- **接入状态**：**已接入**：`selected_tools` 含 ffuf 时由 `external_tools.http_tool()` 执行（`-rate` 限速、`-t 1`、原生 JSON、`-noninteractive`），字典来自冻结的 SecLists；命中先与随机基线比对（`asm-missing-<id>`），再用受治理的 HTTP 路径二次复核，确认不是统一返回页或 404 才入资产。框架另有 Windows httpx 库路径探测，两者是不同组件。
 
 ## 2. 实际接入状态
 
-无自动调度。字典来自 SecLists 稀疏检出（见 [seclists.md](seclists.md)），默认字典是 `raft-medium-directories.txt`。运行前确认字典文件实际存在。
+自动调度由适配器完成（`web_path_enum` 选择 ffuf 时）。字典来自 SecLists 稀疏检出（见 [seclists.md](seclists.md)），默认字典是 `raft-medium-directories.txt`，按冻结 commit 校验后写入 job。
 
 ## 3. 输入准备与场景命令
 
@@ -54,7 +54,7 @@ JSON（`-of json`）顶层含 `results` 数组，每项：`input.FUZZ`、`url`�
 ## 5. 结果衔接与入库
 
 - 衔接：确认的真实路径 → katana 爬取 / httpx 复核 / nuclei 模板目标。
-- 入库：**当前不自动入库**；接入需补“统一返回页基线 + 状态复核 + 范围过滤”适配器。
+- 入库：适配器已实现“随机基线 + 二次 HTTP 复核 + 范围过滤”，确认非 404 且不同于统一返回页才入 `assets`；原始 JSON 作为证据保留。
 - 命中条目是**候选**；结合 Stage 7 的 catch-all 判定（`catch_all:` facts）与 `differential()` 逻辑人工确认。
 
 ## 6. 去重、来源与复核
@@ -80,4 +80,4 @@ JSON（`-of json`）顶层含 `results` 数组，每项：`input.FUZZ`、`url`�
 
 - 官方仓库核对：[ffuf/ffuf](https://github.com/ffuf/ffuf)；版本 2.3.0 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`ffuf -h` 原文 `data/validation/reference-help/ffuf.txt` 与 `data/validation/web-tool-help/ffuf.txt`；框架基线逻辑 [s7_web.py](../../asm/stages/s7_web.py)（`catch_all`、`differential`）。
-- 待验证：接入 Stage 7 的统一返回页基线适配器；真实目标的过滤阈值标定。
+- 待验证：真实目标上的统一返回页阈值标定；`-ac` 自动校准与随机基线的一致性对照。

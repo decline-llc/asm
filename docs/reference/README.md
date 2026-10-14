@@ -59,7 +59,7 @@ date -u +%FT%TZ > "$OUT/started-utc.txt"
 
 每次人工运行独立目录，不覆盖历史结果；保存输入、版本、argv、stdout/stderr、返回码和采集时间。框架任务已自动保存在原生 `results/<jobid>/` 和 Windows `data/<profile>/results/<stage>/<jobid>/`，不用再人为搬到 /mnt。
 
-先核对返回码和原生记录数，再查范围、fake-IP、归属、服务/页面、重复来源。返回成功且空与查询失败是两种状态；dig 的 NXDOMAIN 也可能 exit 0。人工文件没有通用自动导入入口；仅安装工具不会自动新增流水线阶段。
+先核对返回码和原生记录数，再查范围、fake-IP、归属、服务/页面、重复来源。返回成功且空与查询失败是两种状态；dig 的 NXDOMAIN 也可能 exit 0。人工文件没有通用自动导入入口；工具是否已接入由 [tool-versions.md](tool-versions.md) 的矩阵与代码（`asm/external_tools.py` 的 `SUPPORTED`）共同决定，不要按“装了就一定进了流水线”推断。
 
 实网失败时依次查输入/范围 → DNS → TCP/TLS/代理 → 账户/配额 → 版本参数。根据现场证据处理，不用关闭 TLS 验证或放宽范围来掩盖失败。NAT 下两端 localhost 不相同；WSL 报 localhost 代理未镜像时，核对实际代理可达地址，不直接复制 Windows 127.0.0.1 代理端口。
 

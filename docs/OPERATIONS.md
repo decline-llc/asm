@@ -42,18 +42,18 @@ Windows 的 Python `httpx` 库与 WSL 的 ProjectDiscovery `httpx` 二进制是�
 | dig | 已安装 dnsutils | Stage 5 包装器自动调用 | 包装器 `dig.jsonl`；人工调用可存文本 | 五类记录、CNAME 链与异常证据，选择可用地址 |
 | nmap | 7.94SVN | Stage 6 默认引擎；回环 TCP/UDP 已验收 | `nmap.xml`、job.log | IP/端口/传输协议/服务/版本入库，Web 服务交 Stage 7 |
 | masscan | 1.3.2 | Stage 6 可选；完整实际扫描验收待补 | `masscan.json` | 端口候选再用 nmap 确认服务 |
-| naabu | 2.6.1 | 已安装，未接入阶段自动调度 | 手动 `-j -o naabu.jsonl` | 端口候选；需服务复核和后续适配器 |
-| ProjectDiscovery httpx | 1.12.0 | 已安装，未接入 Stage 7 | 手动 `-j -o httpx.jsonl` | HTTP 存活、标题、技术线索；当前不自动入库 |
-| ffuf | 2.3.0 | 已安装，未接入 Stage 7 | 手动 `-of json -o ffuf.json` | 路径候选需排除统一返回页，再复核状态和内容 |
-| katana | 1.8.0 | 已安装，未接入 Stage 7 | 手动 `-j -o katana.jsonl` | URL/JS/表单线索；再做范围、URL、参数核对 |
-| gowitness | 3.2.0 | 已安装，尚待每个浏览器请求的范围控制 | 显式 `--write-jsonl` 与 PNG 目录 | 页面证据与元数据关联；当前截图由 Windows Playwright 承担 |
-| Google Chrome | 155.0.8059.39 | WSL 已安装；当前截图主流程不调用它 | 被调用时产生截图 | gowitness 的浏览器运行时 |
-| wafw00f | 2.4.2 | 已安装，未自动调度 | 手动 `-o wafw00f.json` | WAF 指纹辅助解释状态码；不是确认归属或漏洞的依据 |
-| nuclei | 3.11.1 | 二进制已安装；未自动执行模板，模板库未单独验收 | 手动 `-jsonl -o nuclei.jsonl` | 模板命中是待复核线索，不自动标成已确认漏洞 |
-| a_scan.py | 项目 stdlib TCP 工具 | 已部署并通过 help 自检；未自动调度 | stdout JSONL | TCP connect 端口候选，无服务版本识别 |
+| naabu | 2.6.1 | Stage 6 端口发现可选引擎（经适配器） | `naabu.jsonl`；人工 `-j -o naabu.jsonl` | 端口候选逐条校验目标一致，再用 nmap 确认服务 |
+| ProjectDiscovery httpx | 1.12.0 | Stage 7 `web_visit` 可选引擎（经隔离 broker） | `result.jsonl`；人工 `-j -o httpx.jsonl` | HTTP 存活、标题、技术线索入库；每请求过范围/预算/回执 |
+| ffuf | 2.3.0 | Stage 7 `web_path_enum` 可选引擎（经隔离 broker） | `result.json`；人工 `-of json -o ffuf.json` | 随机基线 + 二次 HTTP 复核，排除统一返回页后入库 |
+| katana | 1.8.0 | Stage 7 `web_crawl` 可选引擎（经隔离 broker；JS 端点 `-jc` 默认开，可关） | `result.jsonl`；人工 `-j -o katana.jsonl` | URL/JS 端点线索；精确 crawl-scope，越界 403 且零传输 |
+| gowitness | 3.2.0 | Stage 7 `screenshot` 可选引擎（任务内 Chrome + 隔离 broker） | `result.jsonl` + `screenshots/*.png` | PNG 校验后作为证据入资产；无图或失败判 partial，不算完成 |
+| Google Chrome | 155.0.8059.39 | gowitness 的浏览器运行时（由任务内 wrapper 启动） | 由 wrapper 启动 | 仅信任任务代理证书固定 SPKI；Windows Playwright 仍是默认截图链 |
+| wafw00f | 2.4.2 | Stage 7 `vulnerability_check` 可选（须显式选 `waf_fingerprint`） | `result.json`；人工 `-o wafw00f.json` | WAF 指纹作为 review 候选；不是归属或漏洞依据 |
+| nuclei | 3.11.1 | Stage 7 `vulnerability_check` 可选（仅执行仓库内批准模板） | `result.jsonl`；人工 `-jsonl -o nuclei.jsonl` | 模板命中是待复核线索，不自动标成已确认漏洞 |
+| a_scan.py | 项目 stdlib TCP 工具 | Stage 6 端口发现可选引擎（任务内副本 + 哈希校验） | stdout JSONL | TCP connect 端口候选，无服务版本识别 |
 | SecLists | 2026.1，稀疏检出 7 文件 | 只安装所需 DNS/Web 字典及 README/LICENSE | 输入字典，非采集结果 | 提供爆破候选；Stage 4 当前用内置 DNS_PREFIXES，不自动读全部 SecLists |
 
-WSL 还安装了 Git 和原生 Python 3.12。Amass、gau、waybackurls、LinkFinder、arjun、x8 当前未安装。不能把工具存在等同于所有功能已串入主流程。
+WSL 还安装了 Git 和原生 Python 3.12。Amass、gau、waybackurls、LinkFinder、arjun、x8 当前未安装。不能把工具存在等同于所有功能已串入主流程。工具版本与接入状态的单一来源见 [reference/tool-versions.md](reference/tool-versions.md)（与 `tools/tool-lock.json` 的一致性由测试强制）。
 
 ### 3.1 从 PowerShell 7 调用
 

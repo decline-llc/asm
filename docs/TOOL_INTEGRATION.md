@@ -68,6 +68,9 @@ plan:
 
 Session 009（2026-10-14）专项：新增 `tests/unit/test_broker_scope.py` 32项，离线与回环固定范围契约——crawl-scope 精确性（不接受近似域名/其它端口/其它协议）、GET/HEAD 转发与回执、越界 URL 得到 403 且不产生观测、预算耗尽与授权撤回必须让任务失败、其它方法/协议被拒、产物名白名单（拒绝 `screenshots/../evil.png` 等路径穿越）、跨主机 CONNECT 在询问协调器之前即被拒、`scope_blocks` 进入工具回执记录，以及用真实 Workbench + 回环夹具证明在范围请求确实落账为 `isolated_http_broker`、越界请求零到达、预算耗尽时账本为 `started`+`blocked`。本批同时把原先内联在 `_http_job` 中的越界判定与产物名校验提取为可测函数（`broker_request()`、`BROKER_ARTIFACT`、`crawl_scope()`），行为不变。证据 `report/validation/broker-scope-unit.xml`。
 
+Session 010（2026-10-14）专项：**katana JS 端点面**——`js_crawl_enabled()` 默认开启 `-jc`，`tool_options.katana.js_crawl: false` 显式关闭，`jsluice`（`-jsl`）需要外部二进制、请求即报错而**不静默降级**，非布尔值报错；`tools/http_tool_runner.py` 只按 `spec["js_crawl"]` 追加 `-jc`，spec 未给时**不**默认开启（策略只由 Windows 侧决定）。JS 解析发现的端点仍由 broker 逐请求治理：katana 上报但 broker 未实际请求的 URL 在解析层降级为 `out_of_scope_leads`，不作为资产。新增 3 项测试（runner flag 矩阵、默认/关闭/拒绝矩阵、经真实 Workbench 证明 `js_crawl` 进入 job spec 且 crawl-scope 为精确 origin）。**工具版本矩阵**——`docs/reference/tool-versions.md` 记录版本、集成状态、接入位置与证据，二进制版本以 `tools/tool-lock.json` 为唯一来源；`tests/unit/test_tool_reference_docs.py` 4 项强制矩阵↔tool-lock 一致、状态取值受控、`SUPPORTED` 全部非「未接入」、已接入工具的 reference 页必须正面声明已接入且无过期断言。同批按代码校正了 10 个已接入工具的参考页、gowitness 运行时页、`docs/OPERATIONS.md` 工具表 9 行与 `docs/reference/README.md`。证据 `report/validation/web-surface-docs-unit.xml`。
+**Web 阶段剩余缺口**（仍需外部验收或另立批次）：JSLuice 级 JS 端点提取（需外部二进制，当前显式拒绝）、CDN 现场差分、更深的可选参数工具（arjun/x8 未安装）、更广 HTTPS 浏览器路径现场验收，以及 `frontend/src/data/dataset.ts` 中按旧状态显示的能力徽章。
+
 原WSL已核实：默认发行版 `Ubuntu`、WSL2，用户 `longchuanli`，工作区 `/home/longchuanli/asm-ws`；已有工具、Chrome、util-linux/iproute2/openssl及固定commit字典均在，直接复用。受限进程先前返回空发行版列表，属于错误的环境判断；正式主机权限下列表才可用于此处核对。误新增的独立 `Ubuntu-24.04` 已停止部署并终止，不自动删除发行版、不迁移原数据、不切换默认发行版。
 
 `scripts/inspect_tool_runtime.py`只读检查原环境；`scripts/prepare_tool_runtime.py`只部署选定的已存在发行版，默认复用 `Ubuntu`，不可见时明确报错，永不自动创建或注销WSL。已有环境不需要重装；安装/升级依赖应按具体缺项处理。

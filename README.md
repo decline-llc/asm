@@ -2,11 +2,11 @@
 
 根据《暴露面收集框架 — 工程实施设计 v2.0》构建的授权暴露面收集与资产治理框架。Windows Python 负责编排、SQLite 和报告；外部扫描工具全部在 WSL 原生文件系统内运行，通过管道交换结果。
 
-当前为可运行基础版本：60 项离线/本地/真实 WSL 测试通过；本地 CLI 已完成 TCP/UDP → Web → 截图 → 报告链路。Stage 4 已接入 OneForAll 七来源白名单被动采集（默认五个）、来源合并和失败/超时证据。DNS 阶段使用 dnsx/dig 多上游、Windows 显式复核、CNAME 链和地址修正；端口与域名报告使用选择后的地址。完整设计仍有缺口，见 `docs/COVERAGE.md`；验收证据见 `docs/ACCEPTANCE.md`。AI 接力入口为 `HANDOFF.md`，过程记录为 `docs/WORKLOG.md`。
+当前为可运行基础版本：非 WSL 回归 382 项通过（另 5 项受本机沙箱/环境限制，其中 1 项负载下抖动、单独复跑通过，见 `docs/ACCEPTANCE.md`）；本地 CLI 已完成 TCP/UDP → Web → 截图 → 报告链路。Stage 4 已接入 OneForAll 七来源白名单被动采集（默认五个）、来源合并和失败/超时证据。DNS 阶段使用 dnsx/dig 多上游、Windows 显式复核、CNAME 链和地址修正，并可选 RFC 8484 DoH 加密上游（`dns.doh_resolvers`，默认关闭）。WSL Web/端口工具（httpx/ffuf/katana/gowitness/nuclei/wafw00f/naabu/a_scan）经适配器接入，其中 HTTP 类工具在私有 network namespace 中运行且每个请求经 broker 交回 Windows 侧范围/预算/回执治理；工具版本与接入状态见 [docs/reference/tool-versions.md](docs/reference/tool-versions.md)。完整设计仍有缺口，见 `docs/COVERAGE.md`；验收证据见 `docs/ACCEPTANCE.md`。AI 接力入口为 `HANDOFF.md`，过程记录为 `docs/WORKLOG.md`。
 
 原始设计和两份 HTML 保留在仓库根目录。运行数据库、API 密钥、真实目标结果不提交 Git。
 
-报告默认同时输出 xlsx、总表 CSV/七明细 CSV 和独立 HTML。HTML 内嵌已采集的 PNG，方便离线保底查看；每工具/搜索引擎的场景命令与排错说明见 [docs/reference/README.md](docs/reference/README.md)。
+报告默认同时输出 xlsx、总表 CSV/七明细 CSV 和独立 HTML。HTML 内嵌已采集的 PNG，方便离线保底查看；每工具/搜索引擎的场景命令与排错说明见 [docs/reference/README.md](docs/reference/README.md)，工具版本与集成状态矩阵见 [docs/reference/tool-versions.md](docs/reference/tool-versions.md)（与 `tools/tool-lock.json` 的一致性由测试强制）。
 
 ## 开始使用
 

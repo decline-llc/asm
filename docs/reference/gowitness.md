@@ -1,6 +1,6 @@
 # gowitness（Web 截图）
 
-> 状态：**仅安装，尚待“每个浏览器请求”的范围控制**；当前主流程截图由 Windows Playwright 承担（见 [playwright.md](playwright.md)）
+> 状态：**已接入 Stage 7（`screenshot` 选择 gowitness 时经隔离 broker 执行）**；默认截图链仍是 Windows Playwright（见 [playwright.md](playwright.md)）
 > 版本：3.2.0（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/gowitness`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/gowitness.txt`、`web-tool-help/gowitness.txt`）
@@ -10,12 +10,12 @@
 
 - **用途**：对 URL 列表批量做浏览器截图并保存元数据（最终 URL、状态、标题、TLS 等）。
 - **适用场景**：目前在**运行中的 WSL 回环 fixture** 上核对参数与输出；未来作为 WSL 侧截图引擎。
-- **局限**：**仅限制输入 URL 还不够**——页面加载的外部子资源、导航、重定向可能越界；接入生产前必须实现“每个浏览器请求”的范围控制。**默认图片是 JPEG**，**默认不一定保存元数据**（需显式 writer flag）。当前 ASM 报告读取 PNG。
-- **接入状态**：已安装、未接入；不自动入库。Windows Playwright 是当前唯一接入的截图链。
+- **局限**：**仅限制输入 URL 还不够**——页面加载的外部子资源、导航、重定向都可能越界，因此必须做**请求级**范围控制；本适配器通过任务内 broker 实现（越界主机 403 且零传输）。**默认图片是 JPEG**，**默认不一定保存元数据**（需显式 writer flag）；ASM 显式要求 PNG 并校验 PNG 魔数。
+- **接入状态**：**已接入**：`selected_tools` 含 gowitness 时由 `external_tools.http_tool()` 执行，`--chrome-proxy` 指向任务内 broker、Chrome 仅信任本任务代理证书的固定 SPKI，导航/子资源/重定向的每个请求都交回 `ExecutionContext.http`；无 PNG 或只有失败记录时判 partial，绝不当作截图完成。
 
 ## 2. 实际接入状态
 
-无自动调度。生产接入前需解决：浏览器导航、子资源与每个请求的范围约束（不能只靠输入 URL 过滤）。`--chrome-path` 必须显式指向已安装 Chrome，避免自动下载不受控的浏览器。
+自动调度由适配器完成（`screenshot` 选择 gowitness 时）。浏览器导航、子资源与每个请求都经代理回到 `ExecutionContext.http`；`--chrome-path` 显式指向任务内 `chrome-wrapper.py`，Chrome 以 `--no-sandbox` 且仅信任本任务代理证书固定 SPKI 的方式在私有 namespace 内启动，不会自动下载浏览器。
 
 ## 3. 输入准备与场景命令（WSL 回环 fixture 先行验证）
 
@@ -57,7 +57,7 @@ run_logged gowitness-help gowitness scan file --help
 ## 5. 结果衔接与入库
 
 - 衔接：截图+元数据 → 报告证据；与 httpx/Stage 7 结果对照。
-- 入库：**当前不自动入库**；ASM 报告内嵌的是 Playwright 已采集的 PNG，不读取 gowitness 目录。
+- 入库：适配器把 PNG 作为证据登记（`screenshots/*.png`，校验 PNG 魔数）并按资产入 `assets`；报告内嵌的是本次运行采集到的 PNG。
 
 ## 6. 去重、来源与复核
 
@@ -75,10 +75,10 @@ run_logged gowitness-help gowitness scan file --help
 | 图片格式不合报告 | 指定 `--screenshot-format png`（ASM 读 PNG；默认 jpeg） |
 | Windows fixture 访问不到 | NAT 两侧回环不同；启动 WSL 侧夹具 |
 | 图片搬走后链接失效 | 元数据/图片一起留存；ASM HTML 内嵌已入库截图 |
-| 越界子资源 | 这是当前未接入的关键原因；接入前须证明请求级范围控制 |
+| 越界子资源 | 已由任务内 broker + 请求级范围判定处理：越界主机 403 且不产生传输，并记入 `scope_blocks` |
 
 ## 8. 官方来源与核对记录
 
 - 官方仓库核对：[sensepost/gowitness](https://github.com/sensepost/gowitness)；版本 3.2.0 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`gowitness scan file --help` 原文 `data/validation/reference-help/gowitness.txt` 与 `data/validation/web-tool-help/gowitness.txt`。
-- 待验证：每个浏览器请求（导航/子资源/重定向）的范围控制实现；与 Playwright 截图的一致性；真实目标稳定性。
+- 待验证：真实 WSL 工具实跑与更广 HTTPS 浏览器路径；与 Playwright 截图的一致性；真实目标稳定性。

@@ -1,6 +1,6 @@
 # naabu（端口发现）
 
-> 状态：**仅安装，尚未接入自动调度**
+> 状态：**已接入 Stage 6（`tcp_scan` 选择 naabu 时经 WSL 执行）**
 > 版本：2.6.1（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/naabu`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/naabu.txt`）
@@ -11,11 +11,11 @@
 - **用途**：快速发现主机开放端口（候选），作为 nmap 之外的端口探测补充。
 - **适用场景**：人工对批准 IP 做端口候选复核；未来可作为适配器接入。
 - **局限**：**只产端口观测，不含充分服务/版本证据**；选出的端口仍需交 nmap `-sV`。`-verify` 是 TCP 复核，**不表示**组织归属已验证。SYN 扫描需要 raw socket 权限；`-s c`（CONNECT）无需特权但语义不同。
-- **接入状态**：已安装、**未接入**任何 Stage；原生 JSONL 不自动入库。放入 `results/` 不会进数据库（不是文件名错误，是没有适配器）。
+- **接入状态**：**已接入**：`tcp_scan` 的 `selected_tools` 含 naabu 时由适配器按任务批次执行，原生 JSONL 逐条校验（IP 必须与请求目标一致）后才成为端口候选，仍需 nmap 确认服务。
 
 ## 2. 实际接入状态
 
-无自动调度。人工调用自存 JSONL，需人工或未来适配器把候选交 nmap。使用 IP 输入可减少本机 fake-DNS 的干扰，但 IP 仍须属于批准范围。
+自动调度由适配器完成（`tcp_scan` 选择 naabu 时）。使用 IP 输入可减少本机 fake-DNS 的干扰，但 IP 仍须属于批准范围。
 
 ## 3. 输入准备与场景命令
 
@@ -74,4 +74,4 @@ JSONL（`-j`）逐行对象，关键字段 `host`、`ip`、`port`、`protocol`�
 
 - 官方仓库核对：[projectdiscovery/naabu](https://github.com/projectdiscovery/naabu)；版本 2.6.1 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`naabu -h` 原文 `data/validation/reference-help/naabu.txt`。
-- 待验证：服务复核与适配器接入；SYN 模式在 WSL 的实测；与 nmap 的一致性基线。
+- 待验证：真实目标服务复核；SYN 模式在 WSL 的实测；与 nmap 的一致性基线。

@@ -1,6 +1,6 @@
 # a_scan.py（项目内置 TCP connect 备用扫描）
 
-> 状态：**仅安装（项目脚本，已部署并通过 help 自检），未自动调度**
+> 状态：**已接入 Stage 6（`tcp_scan` 选择 a_scan 时执行任务内副本）**
 > 版本：随仓库（无独立版本号；stdlib 实现）
 > 位置：WSL `~/asm-ws/tools/a_scan.py`（源码 [tools/scanners/a_scan.py](../../tools/scanners/a_scan.py)）
 > 核对日期：2026-10-10（源码核对）
@@ -11,11 +11,11 @@
 - **用途**：Python 标准库实现的 TCP connect 备用端口扫描器，用于在没有 nmap/masscan/naabu 或只需快速连通性判断时圈定开放端口候选。
 - **适用场景**：最小依赖的端口连通性验证；作为其它扫描器失效时的兜底。
 - **局限**：**只输出成功 connect 的端口**，`service` 恒为 `unknown`，**不做服务/版本识别**，**不扫描 UDP**。connect 成功只证明 TCP 可达，不证明服务身份或归属。输入应是批准的**具体 IP**——给域名会受本机 fake-DNS 影响。
-- **接入状态**：已部署、help 通过；**未接入**主流水线；stdout JSONL 不自动入库。
+- **接入状态**：**已接入**：`tcp_scan` 的 `selected_tools` 含 a_scan 时，源码副本部署到任务目录并校验哈希后执行，stdout JSONL 按批次解析入端口候选（附 `covered_ports` 回执）；只输出成功 connect 的端口。
 
 ## 2. 实际接入状态
 
-独立脚本，无 Stage 调用。线程池（`--threads`）对每个端口做 `socket.create_connection`，成功即打印一行 JSON 到 stdout。无任何网络库依赖，适合精简环境。
+Stage 6 的 `tcp_scan` 选择 a_scan 时执行任务内副本。线程池（`--threads`）对每个端口做 `socket.create_connection`，成功即打印一行 JSON 到 stdout。无任何网络库依赖，适合精简环境。
 
 ## 3. 输入准备与场景命令
 
@@ -51,7 +51,7 @@ stdout 每行一个 JSON 对象（JSONL）：`host`、`port`、`proto`（恒 `tc
 ## 5. 结果衔接与入库
 
 - 衔接：connect 成功的端口候选 → nmap `-sV` 服务识别。
-- 入库：**不自动入库**；人工结果文件不会被 ASM 导入。
+- 入库：适配器解析 stdout JSONL 的开放端口并入库（含 `covered_ports` 覆盖回执）；人工结果文件仍需另写导入。
 
 ## 6. 去重、来源与复核
 
@@ -74,4 +74,4 @@ stdout 每行一个 JSON 对象（JSONL）：`host`、`port`、`proto`（恒 `tc
 
 - 依据：项目源码 [tools/scanners/a_scan.py](../../tools/scanners/a_scan.py)（stdlib，无上游版本）。
 - 本机证据：部署清单 WSL `manifests/installed.txt`；help 自检通过（见 ACCEPTANCE 工具部署）。
-- 待验证：与 nmap 的一致性基线；是否值得纳入适配器。
+- 待验证：与 nmap 的一致性基线；真实目标实网一致性。

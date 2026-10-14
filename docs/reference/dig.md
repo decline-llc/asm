@@ -1,6 +1,6 @@
 # dig（DNS 查询，dnsutils）
 
-> 状态：**已自动调用**（Stage 5 经原生包装器 `tools/dns_probe.py`）
+> 状态：**已接入 Stage 5**（经原生 stdlib 包装器 `tools/dns_probe.py` 在 WSL 调 dig）
 > 版本：dnsutils（WSL apt 安装；版本以 `manifests/installed.txt` 记录为准）
 > 位置：WSL `/usr/bin/dig`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/dig.txt`；回环实测：本地回环 DNS 服务通过，见 ACCEPTANCE）
@@ -11,7 +11,7 @@
 - **用途**：对指定上游做精确 DNS 查询，是 Stage 5 的首选观测来源（同上游优先级 dig → Windows → dnsx）。
 - **适用场景**：单记录核对（A/AAAA/MX/NS/CNAME）、UDP/TCP 传输对照、非标准端口自有解析器验证、CNAME 链追踪。
 - **局限**：人工 dig 输出是**文本**，需要保留完整 SERVER/status/ANSWER 段；`+short` 只适合快速看值、不能作归属证据。dig 的 **NXDOMAIN 也可能 exit 0**（退出码不表示有记录）。SERVER 字段显示的是指定地址，**不证明**网络路径未被代理/TUN 拦截——这是历史 fake-IP 问题的关键陷阱。
-- **接入状态**：Stage 5 用 stdlib 包装器 `dns_probe.py` 在原生 WSL 调 dig，输出 `dig.jsonl`；人工调用结果不自动入库。
+- **接入状态**：**已接入** Stage 5：stdlib 包装器 `dns_probe.py` 在原生 WSL 调 dig，输出 `dig.jsonl`；上游只接受 IP/IP:port，配置 `dns.doh_resolvers` 时加密来源作为独立观测参与同一证据与 selected（见 [RUNBOOK](../RUNBOOK.md) 的 DNS 配置段）；人工调用结果仍需另写导入。
 
 ## 2. 实际接入状态
 
@@ -82,4 +82,4 @@ authorized.invalid.	300	IN	A	203.0.113.10
 
 - 官方文档核对：dig 属 ISC BIND dnsutils；选项以本机 `dig -h` 原文 `data/validation/reference-help/dig.txt` 为准（含 `+https`/`+tls` 等 DoH/DoT 选项，但当前项目未用）。
 - 本机证据：[tools/dns_probe.py](../../tools/dns_probe.py)、[asm/utils/dns.py](../../asm/utils/dns.py)（`parse_dig`、`record_value` fake-IP 过滤）；离线证据 `data/validation/dns/multi-resolver/` 与 `negative-cases/`。
-- 待验证：可信解析路径建立后的实网一致性；DoH/DoT 作为可信上游的适配（当前配置只接受 IP/IP:port）。
+- 待验证：自有授权域名上的实网多上游一致性；DoH 端点在其它网络的可用性矩阵（本机仅 `223.5.5.5`/`1.12.12.12` 可达）；DoT 尚未适配。

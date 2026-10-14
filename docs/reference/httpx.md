@@ -1,6 +1,6 @@
 # ProjectDiscovery httpx（HTTP 存活/指纹探测）
 
-> 状态：**仅安装，尚未接入 Stage 7**（当前 Stage 7 用 Windows Python `httpx` 库，是另一组件）
+> 状态：**已接入 Stage 7（`web_visit` 选择 httpx 时经隔离 broker 执行）**（与 Windows Python `httpx` 库是两个组件）
 > 版本：1.12.0（固定，见 [tool-lock.json](../../tools/tool-lock.json)）
 > 位置：WSL `~/asm-ws/bin/httpx`
 > 核对日期：2026-10-10（本机帮助核对：`data/validation/reference-help/httpx.txt`、`web-tool-help/httpx.txt`）
@@ -11,11 +11,11 @@
 - **用途**：对 URL/主机列表做 HTTP(S) 存活探测，提取状态码、标题、技术指纹、响应长度等线索。
 - **适用场景**：人工对批准的 Web 目标做存活与指纹摸底；未来接入 Stage 7 前的验证。
 - **局限**：**默认不跟随重定向**（`-fr`/`-fhr` 需显式开）；标题/技术是**线索**，不证明归属或漏洞。TLS/CSP 中出现的新域名只是候选，不能自动扩大范围。`-allow`/`-deny` 按 IP/CIDR 过滤解析结果——在 fake-DNS 环境下 allow 可能把目标滤掉。
-- **接入状态**：已安装、未接入；原生 JSONL 不自动入库。不要与 Windows Python `httpx` 库混淆。
+- **接入状态**：**已接入**：`selected_tools` 含 httpx 时由 `external_tools.http_tool()` 在私有 network namespace 中执行，参数固定 `-duc -nfs -retries 0` + 限速，且**不跟随跳转**（`-dr` 语义由 broker 侧 `follow_redirects=False` 保证）；每个请求经 broker 交回 `ExecutionContext.http`，共用范围/预算/回执。不要与 Windows Python `httpx` 库混淆。
 
 ## 2. 实际接入状态
 
-无自动调度。框架 Stage 7 用 Windows 侧 httpx 库（`TargetHTTP`，每跳 scope 校验、响应上限 64KiB、不自动跟随越界跳转）。WSL 二进制接入需先解决：每跳范围检查、TLS/CSP 新域名不扩权、fake-DNS 下 `-allow` 语义。
+自动调度由适配器完成（`web_visit` 选择 httpx 时）。每跳范围检查由 broker 保证（越界主机 403 且无传输），TLS/CSP 出现的新域名不会自动扩权（新主机仍需通过授权范围判定），响应有字节上限。适配器不使用 `-allow` 做 IP 过滤，避免 fake-DNS 下把目标滤掉。框架另有 Windows 侧 httpx 库路径（`TargetHTTP`，每跳 scope 校验、响应上限 64KiB）。
 
 ## 3. 输入准备与场景命令
 
@@ -51,7 +51,7 @@ JSONL 逐行对象，常见字段：`url`、`host`、`port`、`scheme`、`status
 ## 5. 结果衔接与入库
 
 - 衔接：存活 URL/服务 → katana/ffuf（路径与爬取）→ gowitness/Playwright（截图）。
-- 入库：**当前不自动入库**；接入 Stage 7 前需补范围控制适配器。
+- 入库：适配器解析原生 JSONL，范围内且被 broker 请求过的 URL 入 `assets`/`records`；工具上报但 broker 未请求的 URL 记为 `out_of_scope_leads`。
 - 403/502 等状态保存状态+长度，结合基线判断，不单独判定泄露。
 
 ## 6. 去重、来源与复核
@@ -76,4 +76,4 @@ JSONL 逐行对象，常见字段：`url`、`host`、`port`、`scheme`、`status
 
 - 官方仓库核对：[projectdiscovery/httpx](https://github.com/projectdiscovery/httpx)；版本 1.12.0 与 [tool-lock.json](../../tools/tool-lock.json) 的 release URL/SHA-256 一致。
 - 本机证据：`httpx -h` 原文 `data/validation/reference-help/httpx.txt` 与 `data/validation/web-tool-help/httpx.txt`；Windows 侧对照 [asm/utils/http.py](../../asm/utils/http.py)。
-- 待验证：接入 Stage 7 的范围控制适配器（每跳校验）；fake-DNS 下 `-allow` 的可用性；与 Windows httpx 库结果的一致性。
+- 待验证：真实 WSL 工具实跑；与 Windows httpx 库结果的一致性；`-allow` 语义在可信解析路径下的行为（当前不使用）。
