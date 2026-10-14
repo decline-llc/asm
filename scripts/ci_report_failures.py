@@ -16,7 +16,8 @@ from xml.etree import ElementTree
 DEFAULT_PATH = "test-results.xml"
 MAX_MESSAGE = 200
 FAILURE_TAGS = ("failure", "error")
-FRAME = re.compile(r"^([^\s:]+\.py):(\d+): in\b", re.MULTILINE)
+# pytest ends the failure text with the deepest frame, e.g. "asm\utils\dns.py:99: ValueError".
+TRAILING_FRAME = re.compile(r"^(.+\.py):(\d+):")
 
 
 def _escape(text: str) -> str:
@@ -29,13 +30,14 @@ def _summary(node: ElementTree.Element) -> str:
     return _escape((lines or ["failed"])[0][:MAX_MESSAGE])
 
 
-def _location(node: ElementTree.Element) -> str:
-    """Deepest pytest frame in the failure text, as a workflow-command property list."""
-    frames = FRAME.findall(node.text or "")
-    if not frames:
-        return ""
-    path, line = frames[-1]
-    return f" file={path.replace(chr(92), '/')},line={line}"
+def _location(node: ElementTree.Element) -> tuple[str, str] | None:
+    """Deepest frame pytest printed, as (repo-relative path, line)."""
+    lines = [line.strip() for line in (node.text or "").splitlines() if line.strip()]
+    for line in reversed(lines):
+        match = TRAILING_FRAME.match(line)
+        if match:
+            return match.group(1).replace("\\", "/"), match.group(2)
+    return None
 
 
 def main(argv: list[str]) -> int:
@@ -57,7 +59,13 @@ def main(argv: list[str]) -> int:
             continue
         failed += 1
         where = f"{case.get('classname')}::{case.get('name')}"
-        print(f"{prefix}::error{_location(problems[0])}::FAILED {where} - {_summary(problems[0])}")
+        location = _location(problems[0])
+        if location:
+            # The location also stays readable inside the message: GitHub may drop the
+            # file/line properties of a workflow command.
+            where = f"{where} at {location[0]}:{location[1]}"
+        target = f" file={location[0]},line={location[1]}" if location else ""
+        print(f"{prefix}::error{target}::FAILED {where} - {_summary(problems[0])}")
     print(f"ci_report_failures: {failed} failed of {total} cases in {path}")
     return 0
 

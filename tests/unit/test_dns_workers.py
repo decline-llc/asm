@@ -69,7 +69,9 @@ def config(fixture, capability="dns_recursive", workers=2, maximum_calls=30):
         "permissions": {capability: {"allow": True, "scope_ref": "extended" if capability == "dns_enum" else "verification"}},
         "plan": {"selection": "custom", "selected_capabilities": [capability],
                  "params": {capability: {"resolvers": [f"127.0.0.1:{fixture.port}"], "workers": workers,
-                                         "record_types": ["A", "AAAA"], "timeout_seconds": 2, "requests_per_second": 1000,
+                                         # The fixture holds each request to make concurrency observable;
+                                         # loaded CI runners need headroom above that injected delay.
+                                         "record_types": ["A", "AAAA"], "timeout_seconds": 5, "requests_per_second": 1000,
                                          "dictionary": ["api", "mail"], "wildcard_baseline_queries": 2}}},
         "budgets": {"max_rounds": 1, "max_duration_seconds": 60, "per_tool": {capability: {"max_calls": maximum_calls}}},
     }

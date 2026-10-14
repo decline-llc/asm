@@ -22,6 +22,7 @@
 - 复跑 [38568884230](https://github.com/decline-llc/asm/actions/runs/38568884230) 又失败，但这次**注解直接给出证据**：失败任务是 `windows-latest` + Python 3.12，10 项失败中 9 项是 `tests/unit/test_dns_workers.py` 的 `PermissionError: [WinError 10013]`（套接字绑定被系统保留端口范围拒绝），另 1 项是并发用例的 `assert 1 == 2`（负载下的时序抖动）。两个 ubuntu 任务全部通过，Windows 3.11 被 fail-fast 取消，因此**首次 run 38563972959 的 ubuntu 3.12 失败至今未复现**，只能据实记为未复现（本机 320/324 全绿、同一提交第二次运行的 ubuntu 3.12 全绿）。
 - 根因定位：本机历史报告 `dns-workers-fixed.xml` 含同类 10013，新脚本把它定位到 `tests/fixtures/dns_server.py` 的夹具绑定行；且 `test_missing_permission_sends_no_dns_packet` 除创建夹具外不做任何套接字操作，可排除客户端侧。原夹具只对 TCP 绑定重试 16 次、UDP 绑定异常直接抛出，且每次都依赖端口 0 的连续分配，在保留端口密集的 Windows 上会连续落入同一批被拒端口。
 - 修复：`tests/fixtures/dns_server.py` 改为对 UDP/TCP 绑定一起重试，候选端口先取 0 再随机展开（20000–59999，48 次），并把可重试错误码同时按 `errno` 与 `winerror` 判定；`tests/unit/test_dns_workers.py` 并发用例的服务端延时 0.2s→0.5s（断言不变）以稳定重叠窗口。本机 43 项 DNS 相关用例通过（唯一失败仍是沙箱命名管道限制下的 openssl 证书夹具，放宽权限后通过）。
+- 复跑 [38572523201](https://github.com/decline-llc/asm/actions/runs/38572523201)：`WinError 10013` 全部消失（夹具修复生效，9 项失败清零），只剩 1 项 `test_configured_workers_make_real_concurrent_local_queries[dns_enum]` 的 `assert 'partial' == 'completed'`：负载下某次 DNS 查询超过 2s 客户端超时被判 `LifetimeTimeout`，步骤随之失败、run 变 partial。修复：该用例 DNS 参数 `timeout_seconds` 2→5（共享校验上限 30，断言不变）；同时让 CI 注解把最深层栈帧写进消息正文（GitHub 会忽略工作流命令的 file=/line= 属性），并把 `file=`/`line=` 保留为属性。本机 15 项 DNS worker 用例通过。
 
 ## 2026-10-11 · 项目分类与历史证据页面整理
 
