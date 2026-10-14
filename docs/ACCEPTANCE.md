@@ -28,9 +28,9 @@
 | 多工具调度接入 | 已有工具按能力/工具独立入队：dnsx/dig、naabu/a_scan、httpx/ffuf/katana/gowitness/nuclei/wafw00f、OneForAll 隔离 live job 与 SecLists 冻结输入；`tool_options` 覆盖、独立来源/原生输出/证据 hash/双版报告/恢复；本批专项 73 通过（data/validation/external-tools-20261012.xml） | 代码接入及离线/回环通过；真实提供商账户、外部白名单与更广 HTTPS 浏览器路径待验证 |
 | 原 WSL 真实回环 | 原 `Ubuntu`/WSL2、用户 longchuanli、工作区 /home/longchuanli/asm-ws；dig/dnsx、naabu/a_scan/Nmap 五项与 httpx/ffuf/katana/wafw00f/nuclei 五项均 completed，gowitness（gorod）实跑生成 1280×720 PNG 并进入双报告（data/validation/native-tools-live-20261012-150726/、external-tools-live-20261012-151602/） | 回环夹具实跑通过；Masscan 网络接口、Nmap 服务/UDP/NSE 仍待外部验收 |
 | WSL 运行时守卫 | 空/不可见发行版列表不得自动创建或注销 WSL、默认复用 Ubuntu、gowitness 无图退出 0 不得算截图完成；最终相关回归 90 通过（data/validation/original-wsl-final-20261012.xml） | 已通过 |
-| 单元与集成（本批） | 完整单元回归 **320 passed**（原 317 + 3 项新增 WSL 运行时守卫），JUnit 0 failures/errors/skipped（data/validation/tool-integration-unit-20261012-recheck.xml）；受限沙箱内有 3 项管道用例被拒，属环境限制，宽权限下同命令全部通过 | 已通过 |
+| 单元与集成（本批） | 完整单元回归 **320 passed**（原 317 + 3 项新增 WSL 运行时守卫），JUnit 0 failures/errors/skipped（data/validation/tool-integration-unit-20261012-recheck.xml）；受限沙箱内有 3 项管道用例被拒，属环境限制，宽权限下同命令全部通过。最终代码上 CI 同构选择器 `-m "not wsl"` **324 passed / 9 deselected in 257.41s**（report/validation/unit-after-fixture-fix.xml，本地文件不入库） | 已通过 |
 | 静态检查（本批） | `ruff check asm tests tools` 全绿；5 个前端探针脚本原有 11 项问题本轮清零（仅删未用导入/未用局部变量、消除歧义变量名，无行为变更） | 已通过 |
-| GitHub | 本批代码 `5e8913fd5307b63f384c96be3891d7121fd9e81b` 已推送 main，本地与远端 SHA 一致；四环境 CI [38025544302](https://github.com/decline-llc/asm/actions/runs/38025544302) run 与 4/4 jobs 全部 success，Ubuntu/Windows × Python 3.11/3.12 的 ruff、非 WSL 测试、sdist/wheel 构建均通过 | 已验证；收尾仅同步文档 |
+| GitHub | 本批提交链 `eeddb09`（功能接入）→ `cc97a1e`（CI 失败注解）→ `7a621a9`（DNS 夹具端口）→ `d3f33ec`（DNS 超时余量）已推送 main，本地与远端 SHA 一致；最终代码提交 `d3f33ec` 的四环境 CI [38575650738](https://github.com/decline-llc/asm/actions/runs/38575650738) **4/4 jobs success**（Ubuntu/Windows × Python 3.11/3.12：ruff、非 WSL pytest、sdist/wheel 构建）。前两次复跑失败都是 Windows 运行器环境敏感性（保留端口触发 `WinError 10013`、负载下 2s DNS 超时），已修复并在 CI 复验；首次 run 38563972959 的 ubuntu 3.12 失败至今未复现，据实记录 | 已通过；收尾仅同步文档（文档提交按 paths-ignore 不触发 CI） |
 
 `ruff` 与 `pip check` 全绿，sdist 和 wheel 构建成功。wheel 仅包含 Python 包，运行 profiles/fixtures/init-wsl 仍需仓库 editable 安装。
 
