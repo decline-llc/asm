@@ -42,6 +42,11 @@ SECLISTS = {
 }
 
 
+# Only these names may come back from a broker job; a tool cannot ask the
+# coordinator to write an arbitrary path inside the run directory.
+BROKER_ARTIFACT = re.compile(r"(?:tool\.(?:stdout|stderr)|result\.jsonl?|screenshots/[A-Za-z0-9._-]+\.png)")
+
+
 def _result(ctx, assets=None, records=None, status="completed", reason=""):
     return {"status": status, "reason": reason, "assets": assets or [], "records": (records or []) + getattr(ctx, "records", [])}
 
@@ -253,6 +258,40 @@ def _receive_frames(stream, messages):
         messages.put(None)
 
 
+def crawl_scope(target):
+    """Exact-origin crawl scope for one tool job: same scheme, host and port only."""
+    parsed = urlsplit(target)
+    return "^" + re.escape(parsed.scheme + "://" + parsed.netloc) + r"(?:/|$)"
+
+
+def broker_request(ctx, frame, requests, errors):
+    """Relay one tool-generated request through the current policy and ledger.
+
+    Every tool URL, redirect hop and browser subresource arrives here, so an
+    out-of-scope host is answered with 403 instead of being fetched and the
+    attempt is recorded as a scope block rather than as an observation.
+    """
+    url, method = frame["url"], frame["method"]
+    if method not in {"GET", "HEAD"} or urlsplit(url).scheme not in {"http", "https"}:
+        raise ValueError("Unsupported broker request")
+    try:
+        reply = ctx.http(url, method=method, request_headers=frame.get("headers"),
+                         max_response_bytes=int(ctx.params.get("max_response_bytes", 4 * 1024 * 1024)),
+                         follow_redirects=False, transport="isolated_http_broker")
+        requests.append({"url": url, "status": reply["status"], "evidence_id": ctx.last_evidence_id})
+    except PolicyDenied as exc:
+        # Only a function-scope denial is a tool-visible answer. A revoked window or an
+        # exhausted budget must fail the job instead of looking like a remote 4xx.
+        if "outside" not in str(exc):
+            raise
+        errors.append({"url": url, "reason": "outside_function_scope"})
+        reply = {"status": 403, "headers": {}, "body_base64": ""}
+    body = reply.get("body_base64")
+    if body is None:
+        body = base64.b64encode(reply.get("body", "").encode()).decode()
+    return {"id": frame["id"], "status": reply["status"], "headers": reply["headers"], "body_base64": body}
+
+
 def _http_job(ctx, spec, files):
     source = Path(__file__).resolve().parents[1]
     bridge, _, directory = _job(ctx, {**files, "spec.json": json.dumps(spec), "http_tool_runner.py": (source / "tools/http_tool_runner.py").read_bytes()})
@@ -283,24 +322,11 @@ def _http_job(ctx, spec, files):
                 if frame["kind"] == "started":
                     ctx.records.append({"category": "execution_steps", "step_id": ctx.step["id"], "feature": ctx.capability, "tool": spec["tool"], "version": frame["version"], "params": frame["args"], "status": "running"})
                 elif frame["kind"] == "http_request":
-                    url, method = frame["url"], frame["method"]
-                    if method not in {"GET", "HEAD"} or urlsplit(url).scheme not in {"http", "https"}:
-                        raise ValueError("Unsupported broker request")
-                    try:
-                        # Every tool-generated URL, redirect and subresource enters
-                        # the same current policy, receipts and physical ledger.
-                        reply = ctx.http(url, method=method, request_headers=frame.get("headers"), max_response_bytes=int(ctx.params.get("max_response_bytes", 4 * 1024 * 1024)), follow_redirects=False)
-                        requests.append({"url": url, "status": reply["status"], "evidence_id": ctx.last_evidence_id})
-                    except PolicyDenied as exc:
-                        if "outside" not in str(exc):
-                            raise
-                        errors.append({"url": url, "reason": "outside_function_scope"})
-                        reply = {"status": 403, "headers": {}, "body_base64": ""}
-                    process.stdin.write((json.dumps({"id": frame["id"], "status": reply["status"], "headers": reply["headers"], "body_base64": reply.get("body_base64", base64.b64encode(reply.get("body", "").encode()).decode())}) + "\n").encode())
+                    process.stdin.write((json.dumps(broker_request(ctx, frame, requests, errors)) + "\n").encode())
                     process.stdin.flush()
                 elif frame["kind"] == "artifact":
                     name = frame["name"]
-                    if not re.fullmatch(r"(?:tool\.(?:stdout|stderr)|result\.jsonl?|screenshots/[A-Za-z0-9._-]+\.png)", name):
+                    if not BROKER_ARTIFACT.fullmatch(name):
                         raise ValueError("Unexpected tool artifact path")
                     content = base64.b64decode(frame["body_base64"], validate=True)
                     if name.startswith("screenshots/") and not content.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -371,7 +397,7 @@ def http_tool(ctx):
     spec = {"tool": tool, "target": ctx.target, "host": parsed.hostname, "rate": max(1, math.floor(rate)), "timeout": timeout,
             "job_timeout": int(ctx.params.get("host_timeout_seconds", 180)), "depth": int(ctx.params.get("max_depth", 2)),
             "max_requests_per_host": ctx.params["max_requests_per_host"],
-            "crawl_scope": "^" + re.escape(parsed.scheme + "://" + parsed.netloc) + r"(?:/|$)", "templates": [n for n in files if n.startswith("template-")]}
+            "crawl_scope": crawl_scope(ctx.target), "templates": [n for n in files if n.startswith("template-")]}
     if tool == "gowitness":
         spec["driver"] = ctx.params.get("driver", "gorod")
         if spec["driver"] not in {"chromedp", "gorod"}:

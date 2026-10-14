@@ -24,6 +24,7 @@
 | 两端公网 HTTPS | GitHub/PyPI/FOFA/Quake/crt.sh/CertSpotter 主页无凭据 HEAD，Windows/WSL 都有 HTTP 响应 | 抽检传输可达；认证 API/查询覆盖率未验证 |
 | 两端公网 DNS | Session 005：系统及三个显式公共上游 UDP/TCP 53 都返回 example.com=198.18.0.122。Session 008 复测修正：系统解析仍被劫持（服务器列表含 198.18.0.2，example.com→127.0.0.1/::1），显式三家未复现 fake-IP 并返回真实地址（8.8.8.8 UDP 超时） | 已按新观测修正结论；实网可信解析由 DoH 路径承担 |
 | 可信解析路径（DoH） | `dns.doh_resolvers` 加密上游：IP 字面量端点校验、TLS 校验、不跟随跳转、不读环境代理；独立来源入证据；`doh_trusted` 时成为 selected 并输出 `doh_verification`；冲突→`dns_doh_mismatch`+partial；失败回退明文；Stage 4 不再继承系统解析配置；公网回环地址以 `dns_loopback_answer` 拒绝（target_local 豁免） | 代码与离线验收通过；本机实测两个端点可用（report/validation/dns-trusted-path-20261014.json）；真实目标实网核对待授权 |
+| WSL Web 工具范围契约 | 新增 32 项 `tests/unit/test_broker_scope.py`：crawl-scope 精确性、GET/HEAD 转发与回执、越界 URL→403 且无观测、预算耗尽/授权撤回必须失败、其它方法协议被拒、产物名白名单防路径穿越、跨主机 CONNECT 先拒、`scope_blocks` 进入回执；并用真实 Workbench + 回环夹具证明在范围请求落账 `isolated_http_broker`、越界请求零到达、预算耗尽账本为 started+blocked | 已通过（离线/回环）；证据 report/validation/broker-scope-unit.xml；真实 WSL 工具实跑与更广 HTTPS 浏览器路径仍需外部验收 |
 | 本批单元与集成 | 新增 24 项 DoH/可信路径测试全通过；完整非 WSL 回归 **344 passed / 4 environment-blocked**（受限沙箱：2 项 Playwright 截图、1 项 MSYS openssl 管道、1 项集成截图被沙箱拒绝 spawn，均与 DNS 改动无关）；ruff 全绿（`--no-cache`） | 已通过；4 项环境阻塞据实记录，未计入通过 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |

@@ -12,7 +12,7 @@
 | subdomain | subfinder、OneForAll 七来源白名单被动调度（默认五个）、crt.sh、HackerTarget、CDX、FOFA/Quake、有授权 DNS 字典与通配符；来源合并、独立任务目录、失败/超时证据和成功复用；字典使用显式优先上游并过滤不可用地址 | OneForAll 公网接口/已知子域覆盖率、VT/DNSDumpster/Amass、搜索与拼音、JS 回流、引擎优先级路由 |
 | DNS/CDN | WSL dnsx/dig 三上游 A/AAAA/MX/NS/CNAME、Windows 显式复核、各来源及差异证据、优先上游修正、0.0.0.0/::/fake-IP/公网回环劫持隔离、链终点/环路/上限/悬空、CDN 分流、可选原始域名 HTTP 接管指纹 review；端口/域名报告使用修正地址；可选 DoH 加密上游（IP 字面量端点、TLS 校验、不跟随跳转/不读环境代理）作为独立来源与可信 selected，附 `doh_verification` 一致/冲突证据；Stage 4 字典与通配符不再继承系统解析配置 | 自有域名现场证据、真实接管 HTTP 指纹、NS/MX 可注册性核验、历史 IP/归源路径；系统解析被劫持时的可信本地转发器/DoH 引导；DoH 端点在其它网络的可用性矩阵 |
 | ports | root nmap TCP/UDP、masscan 选项、结果入库、蜜罐、/24 聚类 | 主链 Top1000→全端口二段、Quake/FOFA IP enrich、TLS SAN 回流、宝塔/favicon/完整差分指纹 |
-| web | scope 每跳、bounded response、全部内置路由+泄露、catch-all、robots/sitemap、Java 路径、CORS 候选、Playwright 截图 | WSL httpx/gowitness/ffuf/katana 接入、JS 端点、版本矩阵、CDN 现场差分、可选参数工具 |
+| web | scope 每跳、bounded response、全部内置路由+泄露、catch-all、robots/sitemap、Java 路径、CORS 候选、Playwright 截图；WSL httpx/ffuf/katana/gowitness 经私有 netns + 代理接入，每请求/重定向/子资源回到 `ExecutionContext.http` 共用范围、每主机物理预算与回执，越界主机 403 零传输并记为 scope_blocks（crawl-scope 为精确 scheme://host:port） | katana JS 爬取（-jc）与 JSLuice 级 JS 端点提取、版本矩阵、CDN 现场差分、可选参数工具、更广 HTTPS 浏览器路径现场验收 |
 | report | 同一八表导出 xlsx/CSV/HTML；CSV UTF-8 BOM/文本转义，HTML 内嵌 PNG/离线查看/搜索/字段转义/CSP，截图缺失状态；默认报告在 p1/p2 后 | 更多资产业务标签、大体积内嵌图片的性能基线与真实数据版式回归 |
 | panel | 六引擎 fixture 解析、FOFA dot syntax/≥15s/≤200、持久账本、分页、Quake 子域切分 | 真实各家账户校验、Censys 旧 API 迁移评估、跨 profile 的共享额度、IP段细分 |
 | OSINT | 特定词拒绝泛词、SSE 流、公告四合一、导入反哺 | 更多来源、人员图谱、实际服务限流与 API 可用性 |

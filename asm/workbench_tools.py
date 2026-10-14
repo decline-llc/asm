@@ -208,7 +208,8 @@ class ExecutionContext:
         # A reservation never restores an authorization revoked while it committed.
         self.require(url)
 
-    def http(self, url, *, method="GET", capability=None, max_response_bytes=None, request_headers=None, follow_redirects=True):
+    def http(self, url, *, method="GET", capability=None, max_response_bytes=None, request_headers=None,
+             follow_redirects=True, transport="target_http"):
         capability = capability or self.capability
         params = self.params
         max_bytes = int(max_response_bytes or params.get("max_response_bytes", self.run["config"].get("web", {}).get("max_response_bytes", 65536)))
@@ -221,7 +222,7 @@ class ExecutionContext:
             self.require(url)
             def request():
                 with httpx.Client(timeout=timeout, follow_redirects=False, trust_env=False) as client:
-                    self.reserve_http_request(url, method=method)
+                    self.reserve_http_request(url, method=method, transport=transport)
                     self.require(url)
                     with client.stream(method, url, headers={"User-Agent": "ASM-Workbench/0.2", **(request_headers or {})}) as reply:
                         body = bytearray()

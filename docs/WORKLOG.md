@@ -1,5 +1,17 @@
 # 实施记录
 
+## 2026-10-14 · Session 009 · WSL Web 工具范围控制：核实、加固与契约测试
+
+- 用户指令「继续推进」。按 COVERAGE/HANDOFF 的下一优先级处理 Web 阶段 WSL 工具范围控制。**先以代码为准核实**：接力文档称 httpx/ffuf/katana/gowitness 已接入，而 HANDOFF 仍写「gowitness 浏览器子资源/导航的范围约束尚待实现」。读码结论是**约束已实现、HANDOFF 该句已过时**：katana 传 `-cs <精确 scope> -dr -duc`，gowitness 经 `--chrome-path chrome-wrapper.py`（`--no-sandbox` 仅在私有 user/netns）与 `--chrome-proxy <任务内代理>` 且 Chrome 只信任本任务代理证书的固定 SPKI，代理把每个 GET/HEAD 交回 Windows。
+- 真正缺口因此是**可测性与证据**而非功能：范围判定原先内联在 `_http_job` 的帧循环里，无法单测，也没有任何测试证明「越界子资源零到达」这一 HANDOFF 自己提出的验收条件。本批把它提取为可测函数并补齐契约测试。
+- `asm/external_tools.py`：新增 `crawl_scope(target)`（精确 `scheme://host:port` 正则，替换 `http_tool` 内联拼接，**行为不变**）、`BROKER_ARTIFACT` 常量（产物名白名单，替换 `_http_job` 内联 regex）、`broker_request(ctx, frame, requests, errors)`（把越界→403+scope_blocks、预算/授权类 `PolicyDenied` 必须上抛、方法/协议校验、body 编码统一到一处）。`_http_job` 与 `http_tool` 改为调用它们，语义与原先一致。
+- `asm/workbench_tools.py`：`ExecutionContext.http()` 新增 `transport="target_http"` 关键字并透传给 `reserve_http_request`，broker 请求据此在物理账本中标记为 `isolated_http_broker`，与工作台自身的 `target_http` 请求可区分；默认值不变，既有调用与账本语义不受影响。
+- 新增 `tests/unit/test_broker_scope.py` **32 项**（离线 + 回环夹具）：crawl-scope 精确性矩阵（近似域名 `.evil.invalid`、其它端口、其它协议、`127.0.0.10` 均不匹配）、GET/HEAD 转发参数（`follow_redirects=False`、`transport`、请求头、字节上限）与回执、越界 URL 得 403 且 `requests` 为空、预算耗尽与授权撤回必须 `raise`（不得伪装 4xx）、POST/DELETE/ftp/file 被拒且不调用 `ctx.http`、产物名白名单（拒绝 `screenshots/../evil.png`、`screenshots/sub/a.png`、`/etc/passwd`、`result.json.bak` 等路径穿越与后缀绕过）、跨主机 CONNECT 在询问协调器之前即 403（`seen == []`，证明没有发出 `http_request` 帧）、`scope_blocks` 进入 `tool_health` 回执。
+- 其中 3 项用真实 `Workbench` + `m5_fixture` 回环 HTTP 夹具跑端到端：在范围 broker 请求确实到达夹具并被记入账本 `physical_request_started` 且 `transport=isolated_http_broker`；越界 `http://outside.invalid/lib.js` 得到 403、夹具零请求、账本零 `physical_request_*`（夹具同时把 `socket.getaddrinfo` 限制为 localhost，若发生解析会直接失败）；`max_requests_per_host=1` 时第二次 broker 请求触发 `http_request_budget_exhausted`，账本为 `started`+`blocked` 且夹具只收到一次请求。
+- 验证：`ruff check --no-cache asm tests tools scripts` 全绿；新增 32 项与既有 `test_external_tools.py` 13 项合并 45 项全通过；完整非 WSL 回归见下条。证据 `report/validation/broker-scope-unit.xml`。
+- 文档修正：`HANDOFF.md` 该条改为已核实+已测试，不再列为待实现；`docs/TOOL_INTEGRATION.md` 增补范围契约、明文 HTTP 与 HTTPS 隧道的刻意差别（HTTPS 按任务主机固定隧道；明文允许授权范围内其它主机但同样过范围/预算/回执）、以及本批专项验收；`docs/COVERAGE.md` web 行重写（该工具接入已完成、范围契约已测试，剩余改为 katana `-jc`/JSLuice 级 JS 端点、版本矩阵、CDN 现场差分、更广 HTTPS 浏览器路径）；`docs/ACCEPTANCE.md` 新增本批行。
+- 边界与未做：未改系统 DNS/代理/防火墙；未对任何真实目标发包（全部为离线替身与 127.0.0.1 回环夹具）；未开启任何真实 WSL 工具实跑（受限沙箱下子进程管道/浏览器启动被拒），因此「更广 HTTPS 浏览器路径」与真实工具实跑仍属外部验收；capability 行为未改，仅提取函数 + 增加账本标记。
+
 ## 2026-10-14 · Session 008 · 可信 DNS 解析路径（DoH 加密上游 + 劫持答案隔离）
 
 - 用户指令「推进任务」。按 HANDOFF/COVERAGE/本地接力 §10 的既定优先级，本批只做**第一优先级：建立可信 DNS 解析路径**；不改系统 DNS/代理/防火墙，不跑真实目标，不读凭据。
