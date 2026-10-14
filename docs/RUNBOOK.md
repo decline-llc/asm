@@ -73,13 +73,20 @@ dns:
   windows_verify: true
   reject_fake_ip: true
   takeover_probe: false
+  # 可选加密解析（默认关闭，见下方说明）：
+  # doh_resolvers: ["https://223.5.5.5/dns-query", "https://1.12.12.12/dns-query"]
+  # doh_trusted: true
 limits:
   dns_timeout: 900
 ```
 
 上游支持 IP、IPv4:port、[IPv6]:port；默认端口 53，不能填 DNS 主机名或 URL。preferred_resolver 必须在列表内。测试私有 DNS 时显式配置它的地址；WSL NAT 下 Windows 与 Linux 回环不同，WSL 回环验收配置 windows_verify: false，Windows 复核另用 Windows 回环服务验证。
 
-对于同一上游/类型，优先使用成功的 dig 观测，其次 Windows、dnsx。不同来源保留为各自记录；Windows 与 dig 不一致会留下 finding 并标 partial。A/AAAA 有优先上游可用地址时采用它，否则合并其它上游可用地址。0.0.0.0、:: 总是拒绝；198.18.0.0/15 默认拒绝，仅专门 benchmark 靶场可显式关闭 reject_fake_ip。任何错误/无结果都可追溯，未取得有效解析时 selected 为空，端口阶段和报告不会重新采用旧观测地址。实际端口目标仍必须在 IP 白名单中。
+`doh_resolvers` 是**可选**的加密解析（DNS over HTTPS）上游，最多 4 个，必须写成 `https://<IP 字面量>[:端口]/路径`：不接受主机名（那要先解析域名，等于回到被污染的解析路径），也不接受账号密码、query 或 fragment；默认端口 443，证书校验开启，不跟随跳转，不读取环境代理。留空即完全保持原有明文 53 行为；一旦填写，DoH 观测作为独立来源进入 `dns-evidence.json`，`doh_trusted: true`（默认）时加密结果优先成为 selected（交给端口阶段和报告），并新增 `doh_verification`（compared/differences/status）记录加密与明文路径的一致或冲突；不一致会产生 `dns_doh_mismatch` finding 并标 partial。加密路径无可用结果时自动回退明文结果，不会因为 DoH 失败而丢掉整段解析。
+
+因为 DoH 会改变解析来源，只有显式配置 `doh_resolvers` 的 profile 才会把它写进有效配置；未配置的 profile 保持原有 DNS 键集合与恢复指纹不变。示例的两个端点是本机实测可达的公共加密解析；仓库内 profile 一律不默认开启。
+
+对于同一上游/类型，优先使用成功的 DoH 观测，其次 dig、Windows、dnsx。不同来源保留为各自记录；Windows 与 dig 不一致会留下 finding 并标 partial。A/AAAA 有优先上游可用地址时采用它，否则合并其它上游可用地址。0.0.0.0、:: 总是拒绝；198.18.0.0/15 默认拒绝，仅专门 benchmark 靶场可显式关闭 reject_fake_ip。公网目标解析到 127.0.0.0/8 或 ::1 说明本机解析被劫持，属于不可用地址，会被拒绝并留下 `dns_loopback_answer`（仅 target_local 本地靶场允许回环地址）。任何错误/无结果都可追溯，未取得有效解析时 selected 为空，端口阶段和报告不会重新采用旧观测地址。实际端口目标仍必须在 IP 白名单中。
 
 阶段目录输出 dns-observations.json（过滤前解析观测）、dns-evidence.json（按来源/上游/链组织的证据及 selected）、dns.json（可用记录）；外部工具原始文件保留在任务目录。链外部终点只用于 DNS 证据，不加入目标集合。循环、跳数耗尽、超时标 partial；悬空 NXDOMAIN 只产生候选。
 

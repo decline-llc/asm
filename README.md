@@ -21,7 +21,7 @@ $env:ASM_TEST_WSL='1'
 .\.venv\Scripts\python.exe scripts/local-demo.py
 ```
 
-项目当前采用仓库内 editable 安装；profiles、部署脚本与 fixtures 依赖仓库目录，单独 wheel 只包含编排包。安装详见 `docs/RUNBOOK.md`；工具/API/输出/去重/报告说明见 [docs/OPERATIONS.md](docs/OPERATIONS.md)。2026-10-10 两端实测发现显式公共 DNS 的 UDP/TCP 53 仍返回 fake-IP，实网资产核对前需建立可信解析路径。
+项目当前采用仓库内 editable 安装；profiles、部署脚本与 fixtures 依赖仓库目录，单独 wheel 只包含编排包。安装详见 `docs/RUNBOOK.md`；工具/API/输出/去重/报告说明见 [docs/OPERATIONS.md](docs/OPERATIONS.md)。2026-10-14 复测：本机系统解析被劫持（服务器列表含 fake-IP 段的 198.18.0.2，`example.com` 被解析为 `127.0.0.1`/`::1`），已加入可选 DoH 加密上游（`dns.doh_resolvers`，默认关闭）与公网回环答案隔离，见 RUNBOOK 的 DNS 配置段。
 
 `default` 无主动授权；`demo` 只回放脱敏输入；`test` 只允许回环 fixture。配置 `authorization: true` 和白名单才可运行主动模块。外部二进制、字典与工具结果全部放在 WSL 原生文件系统。
 

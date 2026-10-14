@@ -306,15 +306,19 @@ SELECT kind,url,severity,status FROM findings WHERE status!='rejected';
 
 这些状态证明抽检时 TCP/TLS/HTTP 能得到响应；301/404 不证明搜索 API 调用成功、账户有效或覆盖率足够。两端没有 HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY 环境变量，但可能受系统网络路径影响。WSL 仍提示 localhost 代理未镜像至 NAT；不能据此判定 WSL 完全不通网。
 
-**解析问题仍未解决**：Windows/WSL 系统 DNS，以及显式 1.1.1.1、114.114.114.114、8.8.8.8 的 UDP/TCP 53，对 `example.com A` 全返回 `198.18.0.122`。因此本机显式上游并未绕过 fake-IP。代理/TUN 对 DNS 路径的拦截是当前推断，具体配置原因尚未核定。
+**解析路径现状（2026-10-14 复测，Session 008）**：本机**系统解析仍被劫持**——系统 DNS 服务器列表为 `10.10.10.1`、`202.114.0.131`、`202.114.0.242`、**`198.18.0.2`**（fake-IP 段），系统配置对 `example.com A/AAAA` 返回 **`127.0.0.1` / `::1`**。因此任何沿用系统解析配置的调用都会拿到回环地址。
+
+与 Session 005 的记录不同，本批**未能复现**"显式 1.1.1.1/114.114.114.114/8.8.8.8 的 UDP/TCP 53 返回 198.18.0.122"：本批显式查询三家均返回真实地址（1.1.1.1、114.114.114.114 的 UDP/TCP 与 8.8.8.8 的 TCP 通过，8.8.8.8 UDP 超时）。据实记录差异，不把旧结论当作永久事实：环境或代理/TUN 配置可能已经变化，而**密钥在系统解析配置本身**。
 
 WSL 的 Google/Cloudflare HTTPS DNS 对照均 200，得到 `104.20.23.154`、`172.66.147.243`。Windows 初次连接失败/Google TLS 握手超时，随后仍启用 TLS 验证的 Cloudflare 请求和使用系统 trust store 的两家请求成功，得到同样两地址；不能仅据超时认定证书配置错误。这只是当时 `example.com` 的对照观测，不是业务目标资产。
 
-Stage 4/5 拒绝 `0.0.0.0`、`::` 和默认 `198.18.0.0/15`，会避免把 fake-IP 当作可用扫描地址，但**过滤不会找回真实 IP**；全部被拒绝时 selected 为空，后续可能无 IP 目标。当前 dns.resolvers 只接受 IP/IP:port，不支持把 DoH URL 直接填入。
+**已实施的可信解析路径**：`dns.doh_resolvers` 支持最多 4 个 `https://<IP 字面量>/…` 加密解析端点（TLS 校验、不跟随跳转、不读环境代理、端点必须是 IP 字面量以免再次依赖被污染的解析）。配置后 DoH 作为独立来源进入证据，默认 `doh_trusted: true` 时其 A/AAAA 成为交给端口与报告的 selected，并输出 `doh_verification`（一致/冲突）；冲突产生 `dns_doh_mismatch`，DoH 无结果则回退明文。Stage 4 的字典与通配符解析不再继承系统解析配置，改用 profile 的显式上游。Stage 4/5 拒绝 `0.0.0.0`、`::` 和默认 `198.18.0.0/15`，现在也拒绝公网目标收到的回环地址（`dns_loopback_answer`，仅 target_local 本地靶场豁免）——否则被劫持的解析会让扫描打到本机。
 
-下一步先建立可信解析路径，例如核定代理 DNS 排除/真实解析设置，或增加经过验证的 DoH 适配器/可信本地转发器，再用两端对照复测，之后开展实网资产归属和端口核对。本次没有修改系统 DNS、代理、网络或防火墙。
+本机实测（`scripts/dns_trusted_path_evidence.py`，只查询公共示例域 `example.com`，不涉及任何调查目标）：系统解析 `A 127.0.0.1 / AAAA ::1`；显式明文上游与两个 DoH 端点都给出真实地址；Stage 5 在配置 DoH 后 `selected_from=doh`，selected 为真实地址；仅喂入系统解析结果时 selected 为空并产生 `dns_loopback_answer`。证据在 `report/validation/dns-trusted-path-20261014.json`。
 
-本地证据（均被 Git 忽略）：`data/validation/doctor-current.json`、`network-windows.json`、`network-wsl.json`、`network-doh-windows.json`、`network-doh-windows-detail.json`、`network-doh-wsl.json`。doctor 重新通过 18/18，它证明部署可用，不证明解析可信或所有 API 可用。
+`dns.resolvers` 仍只接受 IP/IP:port；DoH 端点写在独立的 `doh_resolvers` 中，两者不能混填。下一批可在确认真实目标与授权后，用该路径做实网资产归属和端口核对。本次没有修改系统 DNS、代理、网络或防火墙。
+
+本地证据（均被 Git 忽略）：`data/validation/doctor-current.json`、`network-windows.json`、`network-wsl.json`、`network-doh-windows.json`、`network-doh-windows-detail.json`、`network-doh-wsl.json`、`report/validation/dns-trusted-path-20261014.json`。doctor 重新通过 18/18，它证明部署可用，不证明解析可信或所有 API 可用。
 
 ## 9. 最终表格字段
 

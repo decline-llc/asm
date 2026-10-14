@@ -1,5 +1,19 @@
 # 实施记录
 
+## 2026-10-14 · Session 008 · 可信 DNS 解析路径（DoH 加密上游 + 劫持答案隔离）
+
+- 用户指令「推进任务」。按 HANDOFF/COVERAGE/本地接力 §10 的既定优先级，本批只做**第一优先级：建立可信 DNS 解析路径**；不改系统 DNS/代理/防火墙，不跑真实目标，不读凭据。
+- 只读环境复测推翻了 Session 005 的部分结论并给出新的根因：本机**系统解析被劫持**——系统 DNS 服务器列表为 `10.10.10.1`、`202.114.0.131`、`202.114.0.242`、**`198.18.0.2`**（fake-IP 段），系统配置把 `example.com A/AAAA` 解析为 **`127.0.0.1` / `::1`**。而 Session 005 记录的"显式 1.1.1.1/114.114.114.114/8.8.8.8 的 UDP/TCP 53 返回 198.18.0.122"**本批未复现**：三家显式上游均返回真实地址（1.1.1.1、114.114.114.114 UDP/TCP 通过，8.8.8.8 TCP 通过、UDP 超时）。据实修正文档结论，不把旧观测当永久事实。加密侧：`223.5.5.5`、`1.12.12.12` 的 DoH 可用；`1.1.1.1`、`8.8.8.8` 的 DoH 在本机连接超时。
+- 新 `asm/utils/dns.py`：`doh_endpoint()` 规范化并校验端点（必须 https、**主机必须是 IP 字面量**——否则要先解析域名，等于回到被污染的路径；拒绝账号密码/query/fragment；端口 1–65535）；`doh_query()` 用 dnspython 组包、base64url `GET ?dns=`、`accept: application/dns-message`，`trust_env=False`、`follow_redirects=False`、响应上限 64 KiB、校验 content-type、**校验 question 回显**、只取 CNAME 链可达的同类型答案并有条数上限，rcode/截断/HTTP 错误分别归类；`record_value(..., reject_loopback=)` 新增公网回环地址拒绝；`DNSSettings` 新增 `doh_resolvers`/`doh_trusted`。该模块同时作为 WSL `dns_support` 被 stdlib-only 的 dig worker 导入，因此 `httpx` 只在函数内延迟导入，模块级保持标准库。
+- `asm/stages/s5_dns_cdn.py`：新增 `collect_doh()` 与 live 分支接线；加密端点作为独立来源 `doh` 进入既有来源/上游证据体系；来源优先级加入 `doh`；当配置了 `doh_resolvers`（且 `doh_trusted`，默认 true）时，**加密 A/AAAA 成为交给 Stage 6 与报告的 selected**，并新增 `doh_verification`（resolvers/trusted/compared/differences/selected_from/status）；加密与明文都可用且不一致时产生 `dns_doh_mismatch` finding + partial；加密无可用结果自动回退明文，不因 DoH 失败丢掉整段解析。公网目标收到回环答案时记录 `dns_loopback_answer` 并拒绝（`target_local` 本地靶场显式豁免），避免被劫持的解析把扫描打到本机。
+- `asm/stages/s4_subdomain.py`：`resolve()` 不再使用 `dns.resolver.Resolver()` 的**系统配置**（那正是被劫持的来源），改为 `configure=False` + 显式上游，默认回退到固定公共上游而非本机列表；原闭包重构为可测试的模块级 `trusted_resolver()`，并在此处同时拒绝 fake-IP 与回环地址——被劫持的上游无法凭空制造子域。`asm/conf.py`：仅当显式配置了 `doh_resolvers` 才把它写入有效 DNS 配置，未配置的 profile 保持原有键集合与恢复指纹不变（新增测试断言该性质）。`asm/policy.py`：`dns_keys` 增加两个映射，使 DoH 设置进入计划参数与预览。
+- 新增 `tests/unit/test_doh_dns.py` **24 项**：端点校验矩阵、配置校验与去重、wire 格式与 accept 头、五种记录类型、NXDOMAIN/SERVFAIL/HTTP 503、超时、content-type 不符、超大响应、截断、question 不匹配、无关/不支持答案、客户端硬化（`follow_redirects`/`trust_env`/`timeout` 实际取值）、Stage 5 加密优先于被投毒明文、路径冲突证据与 finding、加密失败回退、未配置时行为不变、公网回环拒绝与 target_local 豁免、`collect_doh` 覆盖全部域名×类型、Stage 4 不继承系统配置、被劫持上游无法制造子域、配置指纹可选性与策略参数流转。全部离线（`httpx.MockTransport`），无真实解析或目标请求。
+- 验证：`ruff check --no-cache asm tests tools` 全绿；新增 24 项全通过；完整非 WSL 回归 **344 passed / 4 failed**。4 项失败均为**受限沙箱环境阻塞**且与 DNS 改动无关：MSYS `openssl` 生成夹具证书时 `couldn't create signal pipe, Win32 error 5`（1 项）、Playwright 启动浏览器 transport 时 `PermissionError(13)`（2 项截图 + 1 项集成截图）。失败原样保留，不计入通过；未做 stash 对照（见下条沙箱限制）。
+- 本机实测证据 `scripts/dns_trusted_path_evidence.py` → `report/validation/dns-trusted-path-20261014.json`（**只查询公共示例域 `example.com`，不涉及任何调查目标**，Stage 5 摄取全程在内存库中）：系统解析 `A 127.0.0.1 / AAAA ::1`；显式明文与两个 DoH 端点均给出真实地址；配置 DoH 后 `selected_from=doh`、`trusted=true`，selected 为真实地址（104.20.23.154/172.66.147.243 与两个 IPv6）；仅喂系统解析结果时 selected 为空、两条回环答案被拒并产生 `dns_loopback_answer`。
+- 沙箱事实（影响本批记录方式，非仓库缺陷）：本会话 `pwsh` 子进程运行在 **Low 完整性级别**，而工作区内既有对象是 Medium 标签，因此**命令行写不进** `.git`、`asm/`、`tests/`、`data/validation/` 等既有目录（DACL 实际允许 `Authenticated Users (M)`，被阻断的是完整性级别，属预期沙箱约束，故未改权限）；由沙箱进程新建的路径（如 `report/validation/`）可写，本批证据与 JUnit 因此落在 `report/validation/`。**因而 `git commit`/`push` 未执行**（无法创建 `.git/index.lock`），文件改动由编辑器工具完成，待用户决定是否授权一次提权提交。
+- 文档同步：`docs/RUNBOOK.md`（DoH 配置块与语义）、`docs/OPERATIONS.md` 第 8 节（重写解析路径现状、修正 Session 005 结论、记录已实施路径与实测）、`docs/COVERAGE.md`（DNS 行与历史段落修正）、`docs/ACCEPTANCE.md`（新增可信路径与本批验证行、修正公网 DNS 行）、`HANDOFF.md`（接力段与本批结论）、`README.md`。
+- 未做/边界：未修改系统 DNS/代理/网络/防火墙；未查询任何真实目标或凭据；未把 DoH 写入任何仓库内 profile（开启会改变解析来源与恢复指纹，且属实网行为）；六个调研工具与 WSL Web 工具接入仍按原优先级待在 DoH 之后。自有域名实网核对需用户提供授权与凭据。
+
 ## 2026-10-12 · 已有工具流程接入与原 WSL 核对
 
 - 用户范围：先完成已有工具，Amass/gau/waybackurls/LinkFinder/arjun/x8下一批。工具清单在tools/README.md，完整流程与验收在docs/TOOL_INTEGRATION.md。

@@ -10,7 +10,7 @@ from ..models import utcnow
 from ..pipeline import StageResult
 from ..scope import ScopeError
 from ..utils.constants import TAKEOVER_FINGERPRINTS
-from ..utils.dns import DNSSettings, RTYPES, dns_name, record_value, windows_query
+from ..utils.dns import DNSSettings, RTYPES, dns_name, doh_query, record_value, windows_query
 from ..utils.http import TargetHTTP
 from .s4_subdomain import resolve
 
@@ -124,6 +124,20 @@ def collect_wsl(ctx, domains, settings):
     return observations, notes
 
 
+def collect_doh(domains, settings):
+    """Query every configured encrypted resolver independently of plaintext 53."""
+    observations = []
+    tasks = [(domain, rtype, endpoint) for domain in domains for rtype in RTYPES
+             for endpoint in settings.doh_resolvers]
+    if not tasks:
+        return observations
+    with concurrent.futures.ThreadPoolExecutor(max_workers=settings.workers) as executor:
+        futures = [executor.submit(doh_query, domain, rtype, endpoint, settings.timeout)
+                   for domain, rtype, endpoint in tasks]
+        observations.extend(future.result() for future in futures)
+    return observations
+
+
 def probe_takeover(ctx, domain, terminal):
     if getattr(ctx, "dry_run", False):
         # A direct helper call must obey the same boundary as stage ingestion.
@@ -153,6 +167,9 @@ def probe_takeover(ctx, domain, terminal):
 
 def ingest(ctx, observations, settings, notes=None):
     notes, records, evidence = list(notes or []), [], {}
+    # A public name answering with loopback means the local resolver is lying; the local
+    # lab profile is the only place where loopback is a real target.
+    reject_loopback = not getattr(ctx, "target_local", False)
     allowed = {row["domain"] for row in ctx.db.rows("SELECT domain FROM domains") if ctx.scope.contains(row["domain"])}
     for domain in allowed:
         evidence[domain] = {"by_source": {}, "responses": {}, "chains": {}, "rejected": [], "statuses": {}}
@@ -179,10 +196,14 @@ def ingest(ctx, observations, settings, notes=None):
         for answer in observation.get("answers", []):
             rtype = answer.get("rtype")
             try:
-                value = record_value(rtype, answer.get("value", ""), reject_fake_ip=settings.reject_fake_ip)
-            except (ValueError, TypeError):
-                item["rejected"].append({"source": source, "resolver": resolver, **answer})
-                ctx.note("dns_unusable_answer", domain, json.dumps({"resolver": resolver, **answer}))
+                value = record_value(rtype, answer.get("value", ""), reject_fake_ip=settings.reject_fake_ip,
+                                     reject_loopback=reject_loopback)
+            except (ValueError, TypeError) as exc:
+                loopback = "loopback" in str(exc)
+                item["rejected"].append({"source": source, "resolver": resolver,
+                                         "reason": "loopback" if loopback else "unusable", **answer})
+                ctx.note("dns_loopback_answer" if loopback else "dns_unusable_answer", domain,
+                         json.dumps({"resolver": resolver, "reason": str(exc), **answer}))
                 continue
             by_type.setdefault(rtype, set()).add(value)
             records.append({"domain": domain, "rtype": rtype, "value": value,
@@ -199,7 +220,8 @@ def ingest(ctx, observations, settings, notes=None):
                 sources = {source: item["by_source"].get(resolver, {}).get(source, {}).get(rtype, [])
                            for source, statuses in responses.items()
                            if statuses.get(rtype) in ("NOERROR", "NXDOMAIN", "NOANSWER")}
-                source = next((source for source in ("dig", "windows", "dnsx", "fixture") if source in sources), None)
+                source = next((source for source in ("doh", "dig", "windows", "dnsx", "fixture")
+                               if source in sources), None)
                 if source:
                     types[rtype], chosen[rtype] = sources[source], source
                 differences[rtype] = len({tuple(values) for values in sources.values()}) > 1
@@ -217,9 +239,34 @@ def ingest(ctx, observations, settings, notes=None):
         if mismatches:
             ctx.note("dns_verification_mismatch", domain, json.dumps(item["windows_verification"]))
             notes.append(f"Windows/dig DNS verification differs for {domain}: {','.join(mismatches)}")
-        selected = {rtype: corrected_answers({resolver: values.get(rtype, []) for resolver, values in
-                    item["by_resolver"].items()}, settings.preferred, reject_fake_ip=settings.reject_fake_ip)
-                    for rtype in ("A", "AAAA")}
+        # Encrypted resolvers are an independent, tamper-resistant source. When the local
+        # plaintext path is poisoned (fake-IP or loopback hijack) it yields nothing usable,
+        # so a configured DoH answer becomes the address handed to Stage 6 and the reports.
+        encrypted = set(settings.doh_resolvers)
+        trusted_resolvers = {resolver: values for resolver, values in item["by_resolver"].items()
+                             if resolver in encrypted}
+        plaintext_resolvers = {resolver: values for resolver, values in item["by_resolver"].items()
+                               if resolver not in encrypted}
+        encrypted_selected = {rtype: corrected_answers(
+            {resolver: values.get(rtype, []) for resolver, values in trusted_resolvers.items()},
+            settings.doh_resolvers[0] if settings.doh_resolvers else "",
+            reject_fake_ip=settings.reject_fake_ip) for rtype in ("A", "AAAA")}
+        plaintext_selected = {rtype: corrected_answers(
+            {resolver: values.get(rtype, []) for resolver, values in plaintext_resolvers.items()},
+            settings.preferred, reject_fake_ip=settings.reject_fake_ip) for rtype in ("A", "AAAA")}
+        trusted = bool(settings.doh_resolvers and settings.doh_trusted
+                       and (encrypted_selected["A"] or encrypted_selected["AAAA"]))
+        selected = encrypted_selected if trusted else plaintext_selected
+        compared = [rtype for rtype in ("A", "AAAA") if encrypted_selected[rtype] and plaintext_selected[rtype]]
+        disagreements = [rtype for rtype in compared if encrypted_selected[rtype] != plaintext_selected[rtype]]
+        item["doh_verification"] = {
+            "resolvers": list(settings.doh_resolvers), "trusted": trusted, "compared": compared,
+            "differences": disagreements, "selected_from": "doh" if trusted else "plaintext",
+            "status": "disabled" if not settings.doh_resolvers else "mismatch" if disagreements
+            else "match" if compared else "unavailable"}
+        if disagreements:
+            ctx.note("dns_doh_mismatch", domain, json.dumps(item["doh_verification"]))
+            notes.append(f"Encrypted and plaintext DNS disagree for {domain}: {','.join(disagreements)}")
         differences = {rtype: len({tuple(values.get(rtype, [])) for values in item["by_resolver"].values()}) > 1
                        for rtype in ("A", "AAAA")}
         item.update(selected=selected, differences=differences, preferred_resolver=settings.preferred)
@@ -274,6 +321,8 @@ def run(ctx):
                             for value in values]})
     else:
         observations, notes = collect_wsl(ctx, domains, settings)
+        if settings.doh_resolvers:
+            observations.extend(collect_doh(domains, settings))
         if settings.windows_verify:
             with concurrent.futures.ThreadPoolExecutor(max_workers=settings.workers) as executor:
                 futures = [executor.submit(windows_query, domain, rtype, settings.preferred, settings.timeout)

@@ -89,6 +89,11 @@ def load_config(profile="default", root=None, *, load_secrets=False):
                    "max_cname_hops": dns_settings.max_hops, "dnsx": dns_settings.dnsx,
                    "windows_verify": dns_settings.windows_verify, "reject_fake_ip": dns_settings.reject_fake_ip,
                    "takeover_probe": dns_settings.takeover_probe}
+    # Encrypted resolvers are recorded only when configured, so that opt-out profiles keep
+    # their existing resume fingerprint instead of being reported as changed.
+    if dns_settings.doh_resolvers:
+        data["dns"]["doh_resolvers"] = list(dns_settings.doh_resolvers)
+        data["dns"]["doh_trusted"] = dns_settings.doh_trusted
     data["oneforall"] = OneForAllSettings.from_config(data).as_config()
     if data.get("schema_version") == 2:
         data.pop("effective_config_hash", None)

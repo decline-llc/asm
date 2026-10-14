@@ -14,7 +14,9 @@
 
 远端用户指定 `https://github.com/decline-llc/asm.git`，main；代码已与远端同步，实际提交与 CI 证据看 WORKLOG，本地最终回执为 docs/PUSH_RECEIPT.local.json。不要覆盖远端已有提交，不提交 .env、运行数据、真实 targets 或未经脱敏的 fixtures。
 
-环境 Session 005 重测 18/18，未改工具安装。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。优先接续：先建立可信 DNS 路径，再按 COVERAGE 补齐 WSL Web 工具（httpx/gowitness/ffuf/katana）、真实 API/第三方浏览、共享配额和并行调度。Windows/WSL 的系统及显式 1.1.1.1/114.114.114.114/8.8.8.8 UDP/TCP 53 都把 example.com 返回为 198.18.0.122；仅指定上游仍未避开 fake-IP。HTTPS DNS 对照取得公网地址，Windows 曾连接超时后成功；现有 dns.resolvers 不支持 DoH URL。Stage 4/5 过滤假地址不会找回真实地址。本批未修改系统 DNS/代理/防火墙。自有域名/API keys 未提供，不能把回环或主页 HEAD 当成真实资产/认证 API 验收。
+环境 Session 005 重测 18/18，未改工具安装。SecLists 为固定 commit 的所需字典稀疏检出；OneForAll 使用独立 venv 的兼容依赖。优先接续：先建立可信 DNS 路径，再按 COVERAGE 补齐 WSL Web 工具（httpx/gowitness/ffuf/katana）、真实 API/第三方浏览、共享配额和并行调度。
+
+**Session 008（2026-10-14）已实施可信解析路径**：`dns.doh_resolvers`（可选，最多 4 个 `https://<IP 字面量>/…` 端点，TLS 校验、不跟随跳转、不读环境代理）作为加密来源进入 Stage 5，默认 `doh_trusted: true` 时其 A/AAAA 成为 selected，并输出 `doh_verification`；冲突产生 `dns_doh_mismatch`，无结果回退明文。Stage 4 字典/通配符解析不再继承系统解析配置；公网目标收到回环地址会以 `dns_loopback_answer` 拒绝（仅 target_local 靶场豁免）。复测修正了 Session 005 的结论：本机**系统解析**仍被劫持（服务器列表含 198.18.0.2，example.com→127.0.0.1/::1），但显式 1.1.1.1/114.114.114.114/8.8.8.8 未复现 fake-IP；云 DNS 的 1.1.1.1/8.8.8.8 DoH 在本机超时，223.5.5.5/1.12.12.12 可用。仓库内 profile 一律不默认开启 DoH（会改变解析来源与恢复指纹）；证据在 `report/validation/dns-trusted-path-20261014.json`。自有域名/API keys 仍未提供，不能把回环或主页 HEAD 当成真实资产/认证 API 验收。
 
 OPERATIONS.md 已逐项说明安装与调度差别：主流程自动引擎目前仅 FOFA/Quake，另外四家只有适配器；Censys 仍为 Legacy v2，Platform PAT 迁移待做。报告命令和 Stage 8 默认同时生成 xlsx、总表 CSV、七份明细 CSV 与独立 HTML；HTML 内嵌已采集 PNG，无外部脚本/样式/图片，缺失截图明确标注。三种输出后缀都可指定报告基名。p1/p2 当前顺序执行，默认 Stage 8 已放在它们之后；自定义 stages 仍需将 8 放最后。所有凭据为空，现有 test 报告为本地 fixture（4 资产、14 URLs、14 todos、1 首页截图）。
 

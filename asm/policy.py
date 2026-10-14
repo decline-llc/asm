@@ -285,7 +285,8 @@ def effective_config(project, modes_path):
         legacy_params["web_visit"]["timeout_seconds"] = limits["http_timeout"]
     dns = _mapping(project.get("dns", {}), "dns")
     dns_keys = {"resolvers": "resolvers", "timeout": "timeout_seconds", "workers": "workers",
-                "max_cname_hops": "max_cname_hops", "reject_fake_ip": "reject_fake_ip"}
+                "max_cname_hops": "max_cname_hops", "reject_fake_ip": "reject_fake_ip",
+                "doh_resolvers": "doh_resolvers", "doh_trusted": "doh_trusted"}
     legacy_params["dns_recursive"] = {to: dns[key] for key, to in dns_keys.items() if key in dns}
     params = merge(params, legacy_params)
     params = merge(params, plan.get("params", {}))

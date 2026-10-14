@@ -22,7 +22,9 @@
 | DNS 报告与接管 | 域名 sheet 使用 selected，失败时不回退旧地址；可选 HTTP 指纹保存匹配文本/响应摘要并进入 todos；被动模式不探测 HTTP、CNAME/NXDOMAIN 单独不生成 takeover；追加定向回归 11 passed in 2.68s | 报告逻辑及模拟 HTTP 通过；公网待实测 |
 | 18/18 doctor | Session 005 重测 exit 0，18 项全部通过；data/validation/doctor-current.json；未改工具安装 | 已重新验证部署；不证明 DNS 可信 |
 | 两端公网 HTTPS | GitHub/PyPI/FOFA/Quake/crt.sh/CertSpotter 主页无凭据 HEAD，Windows/WSL 都有 HTTP 响应 | 抽检传输可达；认证 API/查询覆盖率未验证 |
-| 两端公网 DNS | 系统及三个显式公共上游 UDP/TCP 53 都返回 example.com=198.18.0.122；HTTPS DNS 对照得公网地址，Windows 曾超时后成功 | 实网可信解析未通过；显式上游仍受 fake-IP 影响 |
+| 两端公网 DNS | Session 005：系统及三个显式公共上游 UDP/TCP 53 都返回 example.com=198.18.0.122。Session 008 复测修正：系统解析仍被劫持（服务器列表含 198.18.0.2，example.com→127.0.0.1/::1），显式三家未复现 fake-IP 并返回真实地址（8.8.8.8 UDP 超时） | 已按新观测修正结论；实网可信解析由 DoH 路径承担 |
+| 可信解析路径（DoH） | `dns.doh_resolvers` 加密上游：IP 字面量端点校验、TLS 校验、不跟随跳转、不读环境代理；独立来源入证据；`doh_trusted` 时成为 selected 并输出 `doh_verification`；冲突→`dns_doh_mismatch`+partial；失败回退明文；Stage 4 不再继承系统解析配置；公网回环地址以 `dns_loopback_answer` 拒绝（target_local 豁免） | 代码与离线验收通过；本机实测两个端点可用（report/validation/dns-trusted-path-20261014.json）；真实目标实网核对待授权 |
+| 本批单元与集成 | 新增 24 项 DoH/可信路径测试全通过；完整非 WSL 回归 **344 passed / 4 environment-blocked**（受限沙箱：2 项 Playwright 截图、1 项 MSYS openssl 管道、1 项集成截图被沙箱拒绝 spawn，均与 DNS 改动无关）；ruff 全绿（`--no-cache`） | 已通过；4 项环境阻塞据实记录，未计入通过 |
 | 自有域名被动链路 | 未提供书面授权的实网测试域名/API keys；只跑离线/本地 | 待真实输入 |
 | 全方法覆盖 | 基础可运行；见后续 COVERAGE.md 的明确缺口 | 不能宣称 v2.0 全项完成 |
 | 多工具调度接入 | 已有工具按能力/工具独立入队：dnsx/dig、naabu/a_scan、httpx/ffuf/katana/gowitness/nuclei/wafw00f、OneForAll 隔离 live job 与 SecLists 冻结输入；`tool_options` 覆盖、独立来源/原生输出/证据 hash/双版报告/恢复；本批专项 73 通过（data/validation/external-tools-20261012.xml） | 代码接入及离线/回环通过；真实提供商账户、外部白名单与更广 HTTPS 浏览器路径待验证 |
@@ -38,4 +40,4 @@ Session 006 原有构建 venv 缺少 wheel 且 setuptools 65.5.0 未达到 >=68�
 
 Session 006 CI run 的 head 与上述代码 SHA 相符，API 返回的各 job/step 状态保存 data/validation/report-formats-ci.json；九项真实 WSL 在本机完整 60 项回归中通过，CI 不执行 WSL。最终文档同步不改已验证代码；main 最终 SHA、工作区状态与 UTC 时间以被忽略的 docs/PUSH_RECEIPT.local.json 为准。
 
-DNS 脱敏证据保留在 data/validation/dns/multi-resolver/ 和 negative-cases/；OneForAll 原生离线运行文件在 data/validation/oneforall/，均不提交 Git。Session 005 的 doctor 与 Windows/WSL 网络、HTTPS DNS 对照保存在 data/validation/，详见 OPERATIONS.md。环境通过不代表实网资产验收完成；两端公共 53 端口实测仍返回 fake-IP，Stage 5 过滤后可能无 selected，需建立可信解析路径。真实 CDN/归属、接管及带账户 API 仍待验证。OneForAll 核心测试未访问公网提供商；主页 HEAD 抽检也不证明其七来源接口完整可用。SecLists 默认只安装版本锁列出的所需文件；完整检出由用户显式选择。
+DNS 脱敏证据保留在 data/validation/dns/multi-resolver/ 和 negative-cases/；OneForAll 原生离线运行文件在 data/validation/oneforall/，均不提交 Git。Session 005 的 doctor 与 Windows/WSL 网络、HTTPS DNS 对照保存在 data/validation/，详见 OPERATIONS.md。Session 008 的可信路径实测（只查询公共示例域 example.com，未接触调查目标）保存在 report/validation/dns-trusted-path-20261014.json。环境通过不代表实网资产验收完成；系统解析被劫持时 Stage 5 会拒绝回环答案并可改用配置的 DoH 端点，但未配置 DoH 的真实目标仍需先建立可信解析。真实 CDN/归属、接管及带账户 API 仍待验证。OneForAll 核心测试未访问公网提供商；主页 HEAD 抽检也不证明其七来源接口完整可用。SecLists 默认只安装版本锁列出的所需文件；完整检出由用户显式选择。

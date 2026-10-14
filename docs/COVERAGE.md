@@ -10,7 +10,7 @@
 | equity | 六阶段 fixture 回放、51% 递归、SPV null、人工导入、同页预热接口 | 第三方网站真实 selectors、人工值守实网、公众号与完整 WebSearch 兜底 |
 | ICP | 5 种分支、已观测子号解析、人工导入、授权 footer | 搜索快照/工信部自动兜底、主体反查；被动模式绝不直接请求目标 footer |
 | subdomain | subfinder、OneForAll 七来源白名单被动调度（默认五个）、crt.sh、HackerTarget、CDX、FOFA/Quake、有授权 DNS 字典与通配符；来源合并、独立任务目录、失败/超时证据和成功复用；字典使用显式优先上游并过滤不可用地址 | OneForAll 公网接口/已知子域覆盖率、VT/DNSDumpster/Amass、搜索与拼音、JS 回流、引擎优先级路由 |
-| DNS/CDN | WSL dnsx/dig 三上游 A/AAAA/MX/NS/CNAME、Windows 显式复核、各来源及差异证据、优先上游修正、0.0.0.0/::/fake-IP 隔离、链终点/环路/上限/悬空、CDN 分流、可选原始域名 HTTP 接管指纹 review；端口/域名报告使用修正地址 | 优先修复两端显式公共 UDP/TCP 53 仍被 fake-IP 影响的解析路径；DoH 适配器/可信转发器、自有域名现场证据、真实接管 HTTP 指纹、NS/MX 可注册性核验、历史 IP/归源路径 |
+| DNS/CDN | WSL dnsx/dig 三上游 A/AAAA/MX/NS/CNAME、Windows 显式复核、各来源及差异证据、优先上游修正、0.0.0.0/::/fake-IP/公网回环劫持隔离、链终点/环路/上限/悬空、CDN 分流、可选原始域名 HTTP 接管指纹 review；端口/域名报告使用修正地址；可选 DoH 加密上游（IP 字面量端点、TLS 校验、不跟随跳转/不读环境代理）作为独立来源与可信 selected，附 `doh_verification` 一致/冲突证据；Stage 4 字典与通配符不再继承系统解析配置 | 自有域名现场证据、真实接管 HTTP 指纹、NS/MX 可注册性核验、历史 IP/归源路径；系统解析被劫持时的可信本地转发器/DoH 引导；DoH 端点在其它网络的可用性矩阵 |
 | ports | root nmap TCP/UDP、masscan 选项、结果入库、蜜罐、/24 聚类 | 主链 Top1000→全端口二段、Quake/FOFA IP enrich、TLS SAN 回流、宝塔/favicon/完整差分指纹 |
 | web | scope 每跳、bounded response、全部内置路由+泄露、catch-all、robots/sitemap、Java 路径、CORS 候选、Playwright 截图 | WSL httpx/gowitness/ffuf/katana 接入、JS 端点、版本矩阵、CDN 现场差分、可选参数工具 |
 | report | 同一八表导出 xlsx/CSV/HTML；CSV UTF-8 BOM/文本转义，HTML 内嵌 PNG/离线查看/搜索/字段转义/CSP，截图缺失状态；默认报告在 p1/p2 后 | 更多资产业务标签、大体积内嵌图片的性能基线与真实数据版式回归 |
@@ -22,7 +22,7 @@
 
 DNS 组合已用三组原生 WSL 回环 DNS 服务实测；Windows dnspython 用 Windows 回环服务独立实测。接管 HTTP 分支仅做模拟响应验证，未进行公网资源注册或真实接管验证。IPv6 DNS 地址选择与报告已验证，nmap 按地址族设置 -6；IPv6 主动端口链路仍待原生实测。
 
-Session 005 公网抽检：Windows/WSL 的系统及三个显式上游 UDP/TCP 53 对 example.com 都返回 198.18.0.122；HTTPS DNS 对照取得公网地址。六个公开 HTTPS 主页均有响应，但未验证认证 API 或完整 OneForAll 来源。修复可信 DNS 路径优先于实网资产核对；详细安装/接入差别、输出和报告样例见 OPERATIONS.md。
+Session 005 公网抽检（历史记录，2026-10-10）：Windows/WSL 的系统及三个显式上游 UDP/TCP 53 对 example.com 都返回 198.18.0.122；HTTPS DNS 对照取得公网地址。**Session 008（2026-10-14）复测已修正该结论**：本机系统解析仍被劫持（系统服务器列表含 fake-IP 段的 198.18.0.2，example.com 被解析为 127.0.0.1/::1），但显式 1.1.1.1/114.114.114.114/8.8.8.8 未复现 fake-IP，均返回真实地址（8.8.8.8 UDP 超时）。据此已实施 DoH 加密上游与回环劫持隔离，见 WORKLOG Session 008 与 OPERATIONS.md 第 8 节；自有域名实网核对仍未进行。六个公开 HTTPS 主页均有响应，但未验证认证 API 或完整 OneForAll 来源。
 
 OneForAll 在真实 WSL venv 中执行固定版本 Collect、Module、SQLite 和 JSON 导出，HTTP 传输替换为离线响应，所有网络连接均由测试夹具阻断。已验证七来源、两个 AlienVault 端点合并、空结果、部分失败、模块/任务超时、不同 root 隔离和成功复用；这些证据不代表公网提供商可达性或覆盖率。没有调用上游默认 run/main，避免其隐含 wildcard/SRV 查询和注册域扩张。
 

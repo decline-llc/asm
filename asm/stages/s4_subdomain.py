@@ -11,18 +11,23 @@ from ..panel.quake import Quake
 from ..pipeline import StageResult
 from ..scope import is_local, normalize_host
 from ..utils.constants import DNS_PREFIXES
-from ..utils.dns import DNSSettings, parse_endpoint, record_value
+from ..utils.dns import DEFAULT_RESOLVERS, DNSSettings, parse_endpoint, record_value
 from . import oneforall
 
 
 def resolve(domain, rtype="A", nameserver=None):
-    resolver = dns.resolver.Resolver()
-    resolver.lifetime = 4
-    if nameserver:
-        host, resolver.port = parse_endpoint(nameserver)
-        resolver.nameservers = [host]
+    """Resolve through one explicit upstream, never the host's own resolver list.
+
+    The host list is untrustworthy: this deployment observed a fake-IP nameserver
+    (198.18.0.2) answering a public name with 127.0.0.1, so inheriting it would let
+    dictionary and wildcard checks report hijacked answers as live subdomains.
+    """
+    host, port = parse_endpoint(nameserver or DEFAULT_RESOLVERS[1])
+    resolver = dns.resolver.Resolver(configure=False)
+    resolver.nameservers, resolver.port = [host], port
+    resolver.timeout = resolver.lifetime = 4
     try:
-        return [str(v).rstrip(".") for v in resolver.resolve(domain, rtype)]
+        return [str(v).rstrip(".") for v in resolver.resolve(domain, rtype, search=False)]
     except dns.exception.DNSException:
         return []
 
@@ -40,6 +45,20 @@ def enumerate_dns(root, *, resolver=resolve, threads=60):
         records = [(domain, answers) for domain, answers in zip(candidates, executor.map(resolver, candidates))
                    if answers]
     return False, records
+
+
+def trusted_resolver(settings, resolver=resolve):
+    """Only keep usable addresses: a hijacking upstream cannot invent subdomains."""
+    def lookup(domain):
+        answers = []
+        for value in resolver(domain, nameserver=settings.preferred):
+            try:
+                answers.append(record_value("A", value, reject_fake_ip=settings.reject_fake_ip,
+                                            reject_loopback=True))
+            except ValueError:
+                continue
+        return answers
+    return lookup
 
 
 def run(ctx):
@@ -132,15 +151,7 @@ def run(ctx):
                 count += len(items)
                 notes.extend(errors)
             if ctx.scope.authorized and not ctx.passive_only:
-                def trusted_resolve(domain):
-                    answers = []
-                    for value in resolve(domain, nameserver=dns_settings.preferred):
-                        try:
-                            answers.append(record_value("A", value, reject_fake_ip=dns_settings.reject_fake_ip))
-                        except ValueError:
-                            continue
-                    return answers
-                wild, records = enumerate_dns(root, resolver=trusted_resolve,
+                wild, records = enumerate_dns(root, resolver=trusted_resolver(dns_settings),
                     threads=ctx.config.get("rates", {}).get("dns_threads", 60))
                 ctx.db.domain(Domain(root, wildcard=int(wild), sources="dns"))
                 for domain, _ in records:
